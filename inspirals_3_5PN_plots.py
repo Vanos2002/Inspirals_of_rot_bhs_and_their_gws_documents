@@ -424,7 +424,7 @@ t_sec_trimmed = t_sec[:min_len]                # Time in seconds
 # Total energy radiated (in code units or SI, depending on units of dE_dt)
 E_radiated_total = cumulative_trapezoid(dE_dt_array, t_sec_trimmed, initial=0.0)
 
-#CONVERT TO PHYSICAL UNITS
+#CONVERT TO PHYSICAL UNITS - NOTE THE DIVISION BY time_unit_seconds, which was before integrated with
 E_totalrad_physical = E_radiated_total * M_kg * c_SI**2 / time_unit_seconds
 
 E_system_total = M_kg * c_SI**2
