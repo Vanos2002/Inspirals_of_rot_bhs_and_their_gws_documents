@@ -156,7 +156,7 @@ def Hamiltonian(r, pr, Lx, Ly, Lz, S1x, S1y, S1z, S2x, S2y, S2z):
         + HS1S2(r, Lx, Ly, Lz, S1x, S1y, S1z, S2x, S2y, S2z))
 
 
-# Equations (EoM) that govern the motion of the binary black hole system's center of mass (derived in Mathematica - via 
+# Equations (EoM) that govern the motion of the binary black hole system's center of mass (derived in Mathematica notebook: eom_2PN_derivation_plots.nb)
 def equations_of_motion(tau, state):
     r, pr, Lx, Ly, Lz, S1x, S1y, S1z, S2x, S2y, S2z = state
     
