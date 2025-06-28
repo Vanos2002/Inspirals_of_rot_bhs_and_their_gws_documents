@@ -1,0 +1,732 @@
+BINARY BLACK HOLE SYSTEM UP TO 2PN
+
+The following Mathematica notebook presents the required physics to describe the motion of a binary black hole system up to the second post-Newtonian order. Thus, gravitational wave emission is not considered and consequently the system ought to be conserved. Apart from the individual Hamiltonian order components, we provide a calculation of the system's equations of motion. The whole Mathematica code uses the formalism of the article: Integrability of eccentric, spinning black hole binaries up to second post-Newtonian order - Sashwat Tanay, Leo C. Stein, José T. Gálvez Ghersi, 2021; arXiv:2012.06586.
+
+VECTORS
+
+In[1]:= (*Position expressed in spherical coordinates*)xv = {r Cos[\[Phi]] Sin[\
+\[Theta]], r Sin[\[Phi]] Sin[\[Theta]], r Cos[\[Theta]]}
+
+Out[1]= {r Cos[\[Phi]] Sin[\[Theta]], r Sin[\[Theta]] Sin[\[Phi]], r Cos[\[Theta]]}
+
+In[2]:= (*Linear momentum vector expressed in terms of momenta canonically conjugate \
+to r,\[Theta],\[Phi]*)pv = {pr, p\[Phi]/(r^2 Sin[\[Theta]]^2), 
+    p\[Theta]/r^2} . {D[xv, r], D[xv, \[Phi]], D[xv, \[Theta]]} // Simplify
+
+Out[2]= {(p\[Theta] Cos[\[Theta]] Cos[\[Phi]] + pr r Cos[\[Phi]] Sin[\[Theta]] - 
+  p\[Phi] Csc[\[Theta]] Sin[\[Phi]])/r, (
+ p\[Phi] Cos[\[Phi]] Csc[\[Theta]] + (p\[Theta] Cos[\[Theta]] + 
+     pr r Sin[\[Theta]]) Sin[\[Phi]])/r, 
+ pr Cos[\[Theta]] - (p\[Theta] Sin[\[Theta]])/r}
+
+px = (ptheta*cos_theta*cos_phi + pr*r*cos_phi*sin_theta - 
+    pphi*sin_phi/sin_theta)/r
+py = (ptheta*cos_theta*sin_phi + pr*r*sin_phi*sin_theta + 
+    pphi*cos_phi/sin_theta)/r
+pz = pr*cos_theta - ptheta*sin_theta/r
+
+In[7]:= (*Define pv^2,pv^4,and pv^6*)pvSquared = pv . pv // FullSimplify
+
+Out[7]= (p\[Theta]^2 + pr^2 r^2 + p\[Phi]^2 Csc[\[Theta]]^2)/r^2
+
+In[8]:= pvFourth = pvSquared^2 // Simplify
+
+Out[8]= (p\[Theta]^2 + pr^2 r^2 + p\[Phi]^2 Csc[\[Theta]]^2)^2/r^4
+
+In[9]:= pvSixth = pvSquared^3 // Simplify
+
+Out[9]= (p\[Theta]^2 + pr^2 r^2 + p\[Phi]^2 Csc[\[Theta]]^2)^3/r^6
+
+In[10]:= (*Angular-momentum vector*)Lv = G M mu Cross[xv, pv] // FullSimplify
+
+Out[10]= {-G M mu (p\[Phi] Cos[\[Phi]] Cot[\[Theta]] + p\[Theta] Sin[\[Phi]]), 
+ G M mu (p\[Theta] Cos[\[Phi]] - p\[Phi] Cot[\[Theta]] Sin[\[Phi]]), 
+ G M mu p\[Phi]}
+
+In[1]:= (*Spin vectors*)S1v = {S1x, S1y, S1z} // FullSimplify
+
+Out[1]= {S1x, S1y, S1z}
+
+In[2]:= S2v = {S2x, S2y, S2z} // FullSimplify
+
+Out[2]= {S2x, S2y, S2z}
+
+In[3]:= (*Effective spin vector*)Seffv = (1 + 3/4 m2/m1) S1v + (1 + 3/4 m1/m2) S2v // 
+  FullSimplify
+
+Out[3]= {S1x + (3 m2 S1x)/(4 m1) + S2x + (3 m1 S2x)/(4 m2), 
+ S1y + (3 m2 S1y)/(4 m1) + S2y + (3 m1 S2y)/(4 m2), 
+ S1z + (3 m2 S1z)/(4 m1) + S2z + (3 m1 S2z)/(4 m2)}
+
+In[11]:= (*Define normalized position vector Rhat*)Rhat = 
+ xv/Norm[xv] // 
+  FullSimplify[#, {r > 0, 0 < \[Phi] < 2 \[Pi], 0 < \[Theta] < \[Pi]}] &
+
+Out[11]= {Cos[\[Phi]] Sin[\[Theta]], Sin[\[Theta]] Sin[\[Phi]], Cos[\[Theta]]}
+
+In[12]:= (*Define the symmetric and traceless part of the second derivative*)Table[
+ D2Rinv[i, j] = (3 Rhat[[i]] Rhat[[j]] - KroneckerDelta[i, j])/(r G M)^3 // 
+   FullSimplify[#, {r > 0, 0 < \[Phi] < 2 \[Pi], 0 < \[Theta] < \[Pi]}] &, {i,
+   1, 3}, {j, 1, 3}]
+
+Out[12]= {{(-1 + 3 Cos[\[Phi]]^2 Sin[\[Theta]]^2)/(G^3 M^3 r^3), (
+  3 Cos[\[Phi]] Sin[\[Theta]]^2 Sin[\[Phi]])/(G^3 M^3 r^3), (
+  3 Cos[\[Theta]] Cos[\[Phi]] Sin[\[Theta]])/(G^3 M^3 r^3)}, {(
+  3 Cos[\[Phi]] Sin[\[Theta]]^2 Sin[\[Phi]])/(
+  G^3 M^3 r^3), (-1 + 3 Sin[\[Theta]]^2 Sin[\[Phi]]^2)/(G^3 M^3 r^3), (
+  3 Cos[\[Theta]] Sin[\[Theta]] Sin[\[Phi]])/(G^3 M^3 r^3)}, {(
+  3 Cos[\[Theta]] Cos[\[Phi]] Sin[\[Theta]])/(G^3 M^3 r^3), (
+  3 Cos[\[Theta]] Sin[\[Theta]] Sin[\[Phi]])/(
+  G^3 M^3 r^3), (-1 + 3 Cos[\[Theta]]^2)/(G^3 M^3 r^3)}}
+
+INDIVIDUAL HAMILTONIAN TERMS AND ITS RESPECTIVE EQUATIONS OF MOTION TERMS
+
+NEWTONIAN ORDER
+
+In[13]:= H0 = \[Mu] (pvSquared/2 - 1/r) // 
+  FullSimplify[#, {r > 0, 0 < \[Phi] < 2 \[Pi], 0 < \[Theta] < \[Pi]}] &
+
+Out[13]= (\[Mu] (p\[Theta]^2 + r (-2 + pr^2 r) + p\[Phi]^2 Csc[\[Theta]]^2))/(2 r^2)
+
+In[14]:= momenta = {pr, p\[Phi], p\[Theta]};
+coords = {r, \[Phi], \[Theta]};
+(*Simply a derivation of Hamilton's equations of motion: *)
+momEOM = Table[-D[H0, coords[[i]]], {i, 1, 3}] // 
+   FullSimplify[#, {r > 0, 0 < \[Phi] < 2 \[Pi], 0 < \[Theta] < \[Pi]}] &;
+coordEOM = 
+  Table[D[H0, momenta[[i]]], {i, 1, 3}] // 
+   FullSimplify[#, {r > 0, 0 < \[Phi] < 2 \[Pi], 0 < \[Theta] < \[Pi]}] &;
+(*Generate a substitutation rule that replaces symbols for canonical \
+coordinates and momenta with corresponding functions of time:*)
+funSub = Join[Table[coords[[i]] -> coords[[i]][t], {i, 1, 3}] , 
+   Table[momenta[[i]] -> momenta[[i]][t], {i, 1, 3}] ];
+(*Generating equations of motion to be solved:*)
+RHS = Join[momEOM, coordEOM] /. funSub;
+LHS = Join[ Table[momenta[[i]]'[t], {i, 1, 3}], 
+   Table[coords[[i]]'[t], {i, 1, 3}]];
+EOM = Table[LHS[[i]] == RHS[[i]], {i, 1, 6}]
+
+Out[21]= {Derivative[1][pr][
+   t] == (\[Mu] (p\[Theta][t]^2 + Csc[\[Theta][t]]^2 p\[Phi][t]^2 - r[t]))/
+  r[t]^3, Derivative[1][p\[Phi]][t] == 0, 
+ Derivative[1][p\[Theta]][
+   t] == (\[Mu] Cot[\[Theta][t]] Csc[\[Theta][t]]^2 p\[Phi][t]^2)/r[t]^2, 
+ Derivative[1][r][t] == \[Mu] pr[t], 
+ Derivative[1][\[Phi]][t] == (\[Mu] Csc[\[Theta][t]]^2 p\[Phi][t])/r[t]^2, 
+ Derivative[1][\[Theta]][t] == (\[Mu] p\[Theta][t])/r[t]^2}
+
+1PN ORDER
+
+In[22]:= H1 = (\[Mu]/c^2) ((3 \[Nu] - 1)/8 pvFourth + 1/(2 r^2) - 
+     1/(2 r) ((3 + \[Nu]) pvSquared + \[Nu] pr^2)) // 
+  FullSimplify[#, {r > 0, 0 < \[Phi] < 2 \[Pi], 0 < \[Theta] < \[Pi]}] &
+
+Out[22]= (\[Mu] (4 r^2 + (-1 + 3 \[Nu]) (p\[Theta]^2 + pr^2 r^2 + 
+      p\[Phi]^2 Csc[\[Theta]]^2)^2 - 
+   4 r (p\[Theta]^2 (3 + \[Nu]) + pr^2 r^2 (3 + 2 \[Nu]) + 
+      p\[Phi]^2 (3 + \[Nu]) Csc[\[Theta]]^2)))/(8 c^2 r^4)
+
+In[23]:= momenta = {pr, p\[Phi], p\[Theta]};
+coords = {r, \[Phi], \[Theta]};
+(*Simply a derivation of Hamilton's equations of motion: *)
+momEOM = Table[-D[H1, coords[[i]]], {i, 1, 3}] // 
+   FullSimplify[#, {r > 0, 0 < \[Phi] < 2 \[Pi], 0 < \[Theta] < \[Pi]}] &;
+coordEOM = 
+  Table[D[H1, momenta[[i]]], {i, 1, 3}] // 
+   FullSimplify[#, {r > 0, 0 < \[Phi] < 2 \[Pi], 0 < \[Theta] < \[Pi]}] &;
+(*Generate a substitutation rule that replaces symbols for canonical \
+coordinates and momenta with corresponding functions of time:*)
+funSub = Join[Table[coords[[i]] -> coords[[i]][t], {i, 1, 3}] , 
+   Table[momenta[[i]] -> momenta[[i]][t], {i, 1, 3}] ];
+(*Generating equations of motion to be solved:*)
+RHS = Join[momEOM, coordEOM] /. funSub;
+LHS = Join[ Table[momenta[[i]]'[t], {i, 1, 3}], 
+   Table[coords[[i]]'[t], {i, 1, 3}]];
+EOM = Table[LHS[[i]] == RHS[[i]], {i, 1, 6}]
+
+Out[30]= {Derivative[1][pr][t] == (1/(
+  2 c^2 r[t]^5))\[Mu] ((-1 + 3 \[Nu]) p\[Theta][
+       t]^4 + (-1 + 3 \[Nu]) Csc[\[Theta][t]]^4 p\[Phi][t]^4 + 
+     r[t]^2 (2 - (3 + 2 \[Nu]) pr[t]^2 r[t]) + 
+     p\[Theta][t]^2 r[t] (-3 (3 + \[Nu]) + (-1 + 3 \[Nu]) pr[t]^2 r[t]) + 
+     Csc[\[Theta][t]]^2 p\[Phi][
+       t]^2 ((-2 + 6 \[Nu]) p\[Theta][t]^2 + 
+        r[t] (-3 (3 + \[Nu]) + (-1 + 3 \[Nu]) pr[t]^2 r[t]))), 
+ Derivative[1][p\[Phi]][t] == 0, 
+ Derivative[1][p\[Theta]][
+   t] == -((\[Mu] Cot[\[Theta][t]] Csc[\[Theta][t]]^2 p\[Phi][
+     t]^2 (2 (3 + \[Nu]) r[
+        t] - (-1 + 3 \[Nu]) (p\[Theta][t]^2 + 
+         Csc[\[Theta][t]]^2 p\[Phi][t]^2 + pr[t]^2 r[t]^2)))/(2 c^2 r[t]^4)), 
+ Derivative[1][r][
+   t] == (\[Mu] pr[
+    t] (-2 (3 + 2 \[Nu]) r[
+       t] + (-1 + 3 \[Nu]) (p\[Theta][t]^2 + Csc[\[Theta][t]]^2 p\[Phi][t]^2 +
+         pr[t]^2 r[t]^2)))/(2 c^2 r[t]^2), 
+ Derivative[1][\[Phi]][
+   t] == (\[Mu] Csc[\[Theta][t]]^2 p\[Phi][
+    t] (-2 (3 + \[Nu]) r[
+       t] + (-1 + 3 \[Nu]) (p\[Theta][t]^2 + Csc[\[Theta][t]]^2 p\[Phi][t]^2 +
+         pr[t]^2 r[t]^2)))/(2 c^2 r[t]^4), 
+ Derivative[1][\[Theta]][
+   t] == (\[Mu] (-8 (3 + \[Nu]) p\[Theta][t] r[t] + 
+     4 (-1 + 3 \[Nu]) p\[Theta][
+       t] (p\[Theta][t]^2 + Csc[\[Theta][t]]^2 p\[Phi][t]^2 + 
+        pr[t]^2 r[t]^2)))/(8 c^2 r[t]^4)}
+
+1.5PN ORDER (SPIN-ORBIT)
+
+
+
+In[31]:= H15 = (2)/(G^2 M^3 c^2 r^3) Dot[Lv, Seffv] // 
+  FullSimplify[#, {r > 0, 0 < \[Phi] < 2 \[Pi], 0 < \[Theta] < \[Pi]}] &
+
+Out[31]= (2 mu (p\[Phi] (S1z + (3 m2 S1z)/(4 m1) + S2z + (3 m1 S2z)/(4 m2)) - (S1x + (
+      3 m2 S1x)/(4 m1) + S2x + (3 m1 S2x)/(
+      4 m2)) (p\[Phi] Cos[\[Phi]] Cot[\[Theta]] + 
+      p\[Theta] Sin[\[Phi]]) + (S1y + (3 m2 S1y)/(4 m1) + S2y + (3 m1 S2y)/(
+      4 m2)) (p\[Theta] Cos[\[Phi]] - 
+      p\[Phi] Cot[\[Theta]] Sin[\[Phi]])))/(c^2 G M^2 r^3)
+
+In[32]:= momenta = {pr, p\[Phi], p\[Theta]};
+coords = {r, \[Phi], \[Theta]};
+(*Simply a derivation of Hamilton's equations of motion: *)
+momEOM = Table[-D[H15, coords[[i]]], {i, 1, 3}] // 
+   FullSimplify[#, {r > 0, 0 < \[Phi] < 2 \[Pi], 0 < \[Theta] < \[Pi]}] &;
+coordEOM = 
+  Table[D[H15, momenta[[i]]], {i, 1, 3}] // 
+   FullSimplify[#, {r > 0, 0 < \[Phi] < 2 \[Pi], 0 < \[Theta] < \[Pi]}] &;
+(*Generate a substitutation rule that replaces symbols for canonical \
+coordinates and momenta with corresponding functions of time:*)
+funSub = Join[Table[coords[[i]] -> coords[[i]][t], {i, 1, 3}] , 
+   Table[momenta[[i]] -> momenta[[i]][t], {i, 1, 3}] ];
+(*Generating equations of motion to be solved:*)
+RHS = Join[momEOM, coordEOM] /. funSub;
+LHS = Join[ Table[momenta[[i]]'[t], {i, 1, 3}], 
+   Table[coords[[i]]'[t], {i, 1, 3}]];
+EOM = Table[LHS[[i]] == RHS[[i]], {i, 1, 6}]
+
+Out[39]= {Derivative[1][pr][t] == (1/(c^2 G M^2 r[t]^4))
+  6 mu ((S1z + (3 m2 S1z)/(4 m1) + S2z + (3 m1 S2z)/(4 m2)) p\[Phi][
+       t] - (S1x + (3 m2 S1x)/(4 m1) + S2x + (3 m1 S2x)/(
+        4 m2)) (Cos[\[Phi][t]] Cot[\[Theta][t]] p\[Phi][t] + 
+        p\[Theta][t] Sin[\[Phi][t]]) + (S1y + (3 m2 S1y)/(4 m1) + S2y + (
+        3 m1 S2y)/(4 m2)) (Cos[\[Phi][t]] p\[Theta][t] - 
+        Cot[\[Theta][t]] p\[Phi][t] Sin[\[Phi][t]])), 
+ Derivative[1][p\[Phi]][t] == -((
+   2 mu ((S1y + (3 m2 S1y)/(4 m1) + S2y + (3 m1 S2y)/(
+         4 m2)) (-Cos[\[Phi][t]] Cot[\[Theta][t]] p\[Phi][t] - 
+         p\[Theta][t] Sin[\[Phi][t]]) - (S1x + (3 m2 S1x)/(4 m1) + S2x + (
+         3 m1 S2x)/(4 m2)) (Cos[\[Phi][t]] p\[Theta][t] - 
+         Cot[\[Theta][t]] p\[Phi][t] Sin[\[Phi][t]])))/(c^2 G M^2 r[t]^3)), 
+ Derivative[1][p\[Theta]][t] == -((
+   mu Csc[\[Theta][t]]^2 p\[Phi][
+     t] ((3 m2^2 S1x + 3 m1^2 S2x + 4 m1 m2 (S1x + S2x)) Cos[\[Phi][
+         t]] + (3 m2^2 S1y + 3 m1^2 S2y + 4 m1 m2 (S1y + S2y)) Sin[\[Phi][
+         t]]))/(2 c^2 G M^2 m1 m2 r[t]^3)), Derivative[1][r][t] == 0, 
+ Derivative[1][\[Phi]][t] == (
+  2 mu (S1z + (3 m2 S1z)/(4 m1) + S2z + (3 m1 S2z)/(
+     4 m2) - (S1x + (3 m2 S1x)/(4 m1) + S2x + (3 m1 S2x)/(4 m2)) Cos[\[Phi][
+        t]] Cot[\[Theta][t]] - (S1y + (3 m2 S1y)/(4 m1) + S2y + (3 m1 S2y)/(
+        4 m2)) Cot[\[Theta][t]] Sin[\[Phi][t]]))/(c^2 G M^2 r[t]^3), 
+ Derivative[1][\[Theta]][t] == (
+  2 mu ((S1y + (3 m2 S1y)/(4 m1) + S2y + (3 m1 S2y)/(4 m2)) Cos[\[Phi][
+        t]] - (S1x + (3 m2 S1x)/(4 m1) + S2x + (3 m1 S2x)/(4 m2)) Sin[\[Phi][
+        t]]))/(c^2 G M^2 r[t]^3)}
+
+In[40]:= Omega1 = Grad[H15, S1v] // FullSimplify
+Omega2 = Grad[H15, S2v] // FullSimplify
+
+Out[40]= {-((2 (1 + (3 m2)/(4 m1)) mu (p\[Phi] Cos[\[Phi]] Cot[\[Theta]] + 
+     p\[Theta] Sin[\[Phi]]))/(c^2 G M^2 r^3)), (
+ 2 (1 + (3 m2)/(4 m1)) mu (p\[Theta] Cos[\[Phi]] - 
+    p\[Phi] Cot[\[Theta]] Sin[\[Phi]]))/(c^2 G M^2 r^3), (
+ 2 (1 + (3 m2)/(4 m1)) mu p\[Phi])/(c^2 G M^2 r^3)}
+
+Out[41]= {-((2 (1 + (3 m1)/(4 m2)) mu (p\[Phi] Cos[\[Phi]] Cot[\[Theta]] + 
+     p\[Theta] Sin[\[Phi]]))/(c^2 G M^2 r^3)), (
+ 2 (1 + (3 m1)/(4 m2)) mu (p\[Theta] Cos[\[Phi]] - 
+    p\[Phi] Cot[\[Theta]] Sin[\[Phi]]))/(c^2 G M^2 r^3), (
+ 2 (1 + (3 m1)/(4 m2)) mu p\[Phi])/(c^2 G M^2 r^3)}
+
+In[43]:= spinEOM1 = {D[S1x[t], t] == Cross[Omega1, S1v][[1]], 
+  D[S1y[t], t] == Cross[Omega1, S1v][[2]], 
+  D[S1z[t], t] == Cross[Omega1, S1v][[3]]}
+
+Out[43]= {Derivative[1][S1x][t] == -((2 mu p\[Phi] S1y)/(c^2 G M^2 r^3)) - (
+   3 m2 mu p\[Phi] S1y)/(2 c^2 G M^2 m1 r^3) + (
+   2 mu p\[Theta] S1z Cos[\[Phi]])/(c^2 G M^2 r^3) + (
+   3 m2 mu p\[Theta] S1z Cos[\[Phi]])/(2 c^2 G M^2 m1 r^3) - (
+   2 mu p\[Phi] S1z Cot[\[Theta]] Sin[\[Phi]])/(c^2 G M^2 r^3) - (
+   3 m2 mu p\[Phi] S1z Cot[\[Theta]] Sin[\[Phi]])/(2 c^2 G M^2 m1 r^3), 
+ Derivative[1][S1y][t] == (2 mu p\[Phi] S1x)/(c^2 G M^2 r^3) + (
+   3 m2 mu p\[Phi] S1x)/(2 c^2 G M^2 m1 r^3) + (
+   2 mu p\[Phi] S1z Cos[\[Phi]] Cot[\[Theta]])/(c^2 G M^2 r^3) + (
+   3 m2 mu p\[Phi] S1z Cos[\[Phi]] Cot[\[Theta]])/(2 c^2 G M^2 m1 r^3) + (
+   2 mu p\[Theta] S1z Sin[\[Phi]])/(c^2 G M^2 r^3) + (
+   3 m2 mu p\[Theta] S1z Sin[\[Phi]])/(2 c^2 G M^2 m1 r^3), 
+ Derivative[1][S1z][
+   t] == -((2 mu p\[Theta] S1x Cos[\[Phi]])/(c^2 G M^2 r^3)) - (
+   3 m2 mu p\[Theta] S1x Cos[\[Phi]])/(2 c^2 G M^2 m1 r^3) - (
+   2 mu p\[Phi] S1y Cos[\[Phi]] Cot[\[Theta]])/(c^2 G M^2 r^3) - (
+   3 m2 mu p\[Phi] S1y Cos[\[Phi]] Cot[\[Theta]])/(2 c^2 G M^2 m1 r^3) - (
+   2 mu p\[Theta] S1y Sin[\[Phi]])/(c^2 G M^2 r^3) - (
+   3 m2 mu p\[Theta] S1y Sin[\[Phi]])/(2 c^2 G M^2 m1 r^3) + (
+   2 mu p\[Phi] S1x Cot[\[Theta]] Sin[\[Phi]])/(c^2 G M^2 r^3) + (
+   3 m2 mu p\[Phi] S1x Cot[\[Theta]] Sin[\[Phi]])/(2 c^2 G M^2 m1 r^3)}
+
+In[42]:= spinEOM2 = {D[S2x[t], t] == Cross[Omega2, S2v][[1]], 
+  D[S2y[t], t] == Cross[Omega2, S2v][[2]], 
+  D[S2z[t], t] == Cross[Omega2, S2v][[3]]}
+
+Out[42]= {Derivative[1][S2x][t] == -((2 mu p\[Phi] S2y)/(c^2 G M^2 r^3)) - (
+   3 m1 mu p\[Phi] S2y)/(2 c^2 G M^2 m2 r^3) + (
+   2 mu p\[Theta] S2z Cos[\[Phi]])/(c^2 G M^2 r^3) + (
+   3 m1 mu p\[Theta] S2z Cos[\[Phi]])/(2 c^2 G M^2 m2 r^3) - (
+   2 mu p\[Phi] S2z Cot[\[Theta]] Sin[\[Phi]])/(c^2 G M^2 r^3) - (
+   3 m1 mu p\[Phi] S2z Cot[\[Theta]] Sin[\[Phi]])/(2 c^2 G M^2 m2 r^3), 
+ Derivative[1][S2y][t] == (2 mu p\[Phi] S2x)/(c^2 G M^2 r^3) + (
+   3 m1 mu p\[Phi] S2x)/(2 c^2 G M^2 m2 r^3) + (
+   2 mu p\[Phi] S2z Cos[\[Phi]] Cot[\[Theta]])/(c^2 G M^2 r^3) + (
+   3 m1 mu p\[Phi] S2z Cos[\[Phi]] Cot[\[Theta]])/(2 c^2 G M^2 m2 r^3) + (
+   2 mu p\[Theta] S2z Sin[\[Phi]])/(c^2 G M^2 r^3) + (
+   3 m1 mu p\[Theta] S2z Sin[\[Phi]])/(2 c^2 G M^2 m2 r^3), 
+ Derivative[1][S2z][
+   t] == -((2 mu p\[Theta] S2x Cos[\[Phi]])/(c^2 G M^2 r^3)) - (
+   3 m1 mu p\[Theta] S2x Cos[\[Phi]])/(2 c^2 G M^2 m2 r^3) - (
+   2 mu p\[Phi] S2y Cos[\[Phi]] Cot[\[Theta]])/(c^2 G M^2 r^3) - (
+   3 m1 mu p\[Phi] S2y Cos[\[Phi]] Cot[\[Theta]])/(2 c^2 G M^2 m2 r^3) - (
+   2 mu p\[Theta] S2y Sin[\[Phi]])/(c^2 G M^2 r^3) - (
+   3 m1 mu p\[Theta] S2y Sin[\[Phi]])/(2 c^2 G M^2 m2 r^3) + (
+   2 mu p\[Phi] S2x Cot[\[Theta]] Sin[\[Phi]])/(c^2 G M^2 r^3) + (
+   3 m1 mu p\[Phi] S2x Cot[\[Theta]] Sin[\[Phi]])/(2 c^2 G M^2 m2 r^3)}
+
+
+
+2PN ORDER - ORBITAL TERMS
+
+In[44]:= H2PN = \[Mu]/
+    c^4 (-1/(4 r^3) (1 + 3 \[Nu]) + 1/16 (1 - 5 \[Nu] + 5 \[Nu]^2) pvSixth + 
+     1/(2 r^2) (3 \[Nu] pr^2 + (5 + 8 \[Nu]) pvSquared) + 
+     1/(8 r) (-3 \[Nu]^2 pr^4 - 
+        2 \[Nu]^2 pr^2 pvSquared + (5 - 20 \[Nu] - 3 \[Nu]^2) pvFourth)) // 
+  FullSimplify[#, {r > 0, 0 < \[Phi] < 2 \[Pi], 0 < \[Theta] < \[Pi]}] &
+
+Out[44]= (1/(16 c^4 r^6))\[Mu] (24 pr^2 r^4 \[Nu] - 6 pr^4 r^5 \[Nu]^2 - 
+   4 r^3 (1 + 3 \[Nu]) - 
+   4 pr^2 r^3 \[Nu]^2 (p\[Theta]^2 + pr^2 r^2 + p\[Phi]^2 Csc[\[Theta]]^2) + 
+   8 r^2 (5 + 8 \[Nu]) (p\[Theta]^2 + pr^2 r^2 + p\[Phi]^2 Csc[\[Theta]]^2) - 
+   2 r (-5 + \[Nu] (20 + 3 \[Nu])) (p\[Theta]^2 + pr^2 r^2 + 
+      p\[Phi]^2 Csc[\[Theta]]^2)^2 + (1 + 5 (-1 + \[Nu]) \[Nu]) (p\[Theta]^2 +
+       pr^2 r^2 + p\[Phi]^2 Csc[\[Theta]]^2)^3)
+
+In[45]:= momenta = {pr, p\[Phi], p\[Theta]};
+coords = {r, \[Phi], \[Theta]};
+(*Simply a derivation of Hamilton's equations of motion: *)
+momEOM = Table[-D[H2PN, coords[[i]]], {i, 1, 3}] // 
+   FullSimplify[#, {r > 0, 0 < \[Phi] < 2 \[Pi], 0 < \[Theta] < \[Pi]}] &;
+coordEOM = 
+  Table[D[H2PN, momenta[[i]]], {i, 1, 3}] // 
+   FullSimplify[#, {r > 0, 0 < \[Phi] < 2 \[Pi], 0 < \[Theta] < \[Pi]}] &;
+(*Generate a substitutation rule that replaces symbols for canonical \
+coordinates and momenta with corresponding functions of time:*)
+funSub = Join[Table[coords[[i]] -> coords[[i]][t], {i, 1, 3}] , 
+   Table[momenta[[i]] -> momenta[[i]][t], {i, 1, 3}] ];
+(*Generating equations of motion to be solved:*)
+RHS = Join[momEOM, coordEOM] /. funSub;
+LHS = Join[ Table[momenta[[i]]'[t], {i, 1, 3}], 
+   Table[coords[[i]]'[t], {i, 1, 3}]];
+EOM = Table[LHS[[i]] == RHS[[i]], {i, 1, 6}]
+
+Out[52]= {Derivative[1][pr][t] == 
+  1/(8 c^4 r[
+     t]^7) \[Mu] (3 (1 + 5 (-1 + \[Nu]) \[Nu]) p\[Theta][t]^6 + 
+      3 (1 + 5 (-1 + \[Nu]) \[Nu]) Csc[\[Theta][t]]^6 p\[Phi][t]^6 + 
+      p\[Theta][t]^4 r[
+        t] (25 - 5 \[Nu] (20 + 3 \[Nu]) + 
+         6 (1 + 5 (-1 + \[Nu]) \[Nu]) pr[t]^2 r[t]) + 
+      p\[Theta][t]^2 r[
+        t]^2 (16 (5 + 8 \[Nu]) + 
+         3 pr[t]^2 r[
+           t] (10 - 8 \[Nu] (5 + \[Nu]) + (1 + 5 (-1 + \[Nu]) \[Nu]) pr[
+              t]^2 r[t])) + 
+      Csc[\[Theta][t]]^4 p\[Phi][
+        t]^4 (9 (1 + 5 (-1 + \[Nu]) \[Nu]) p\[Theta][t]^2 + 
+         r[t] (25 - 5 \[Nu] (20 + 3 \[Nu]) + 
+            6 (1 + 5 (-1 + \[Nu]) \[Nu]) pr[t]^2 r[t])) + 
+      r[t]^3 (-6 (1 + 3 \[Nu]) + 
+         pr[t]^2 r[
+           t] (40 + 88 \[Nu] + (5 - 4 \[Nu] (5 + 2 \[Nu])) pr[t]^2 r[t])) + 
+      Csc[\[Theta][t]]^2 p\[Phi][
+        t]^2 (9 (1 + 5 (-1 + \[Nu]) \[Nu]) p\[Theta][t]^4 + 
+         2 p\[Theta][t]^2 r[
+           t] (25 - 5 \[Nu] (20 + 3 \[Nu]) + 
+            6 (1 + 5 (-1 + \[Nu]) \[Nu]) pr[t]^2 r[t]) + 
+         r[t]^2 (16 (5 + 8 \[Nu]) + 
+            3 pr[t]^2 r[
+              t] (10 - 8 \[Nu] (5 + \[Nu]) + (1 + 5 (-1 + \[Nu]) \[Nu]) pr[
+                 t]^2 r[t])))), Derivative[1][p\[Phi]][t] == 0, 
+ Derivative[1][p\[Theta]][t] == -(1/(
+   8 c^4 r[t]^6))\[Mu] Cot[\[Theta][t]] Csc[\[Theta][t]]^2 p\[Phi][
+     t]^2 (-8 (5 + 8 \[Nu]) r[t]^2 + 4 \[Nu]^2 pr[t]^2 r[t]^3 + 
+      4 (-5 + \[Nu] (20 + 3 \[Nu])) r[
+        t] (p\[Theta][t]^2 + Csc[\[Theta][t]]^2 p\[Phi][t]^2 + 
+         pr[t]^2 r[t]^2) - 
+      3 (1 + 5 (-1 + \[Nu]) \[Nu]) (p\[Theta][t]^2 + 
+         Csc[\[Theta][t]]^2 p\[Phi][t]^2 + pr[t]^2 r[t]^2)^2), 
+ Derivative[1][r][t] == 
+  1/(8 c^4 r[t]^4) \[Mu] pr[
+     t] (24 \[Nu] r[t]^2 + 8 (5 + 8 \[Nu]) r[t]^2 - 
+      16 \[Nu]^2 pr[t]^2 r[t]^3 - 
+      4 \[Nu]^2 r[
+        t] (p\[Theta][t]^2 + Csc[\[Theta][t]]^2 p\[Phi][t]^2 + 
+         pr[t]^2 r[t]^2) - 
+      4 (-5 + \[Nu] (20 + 3 \[Nu])) r[
+        t] (p\[Theta][t]^2 + Csc[\[Theta][t]]^2 p\[Phi][t]^2 + 
+         pr[t]^2 r[t]^2) + 
+      3 (1 + 5 (-1 + \[Nu]) \[Nu]) (p\[Theta][t]^2 + 
+         Csc[\[Theta][t]]^2 p\[Phi][t]^2 + pr[t]^2 r[t]^2)^2), 
+ Derivative[1][\[Phi]][t] == (1/(
+  8 c^4 r[t]^6))\[Mu] Csc[\[Theta][t]]^2 p\[Phi][
+    t] (8 (5 + 8 \[Nu]) r[t]^2 - 4 \[Nu]^2 pr[t]^2 r[t]^3 - 
+     4 (-5 + \[Nu] (20 + 3 \[Nu])) r[
+       t] (p\[Theta][t]^2 + Csc[\[Theta][t]]^2 p\[Phi][t]^2 + 
+        pr[t]^2 r[t]^2) + 
+     3 (1 + 5 (-1 + \[Nu]) \[Nu]) (p\[Theta][t]^2 + 
+        Csc[\[Theta][t]]^2 p\[Phi][t]^2 + pr[t]^2 r[t]^2)^2), 
+ Derivative[1][\[Theta]][t] == (1/(
+  8 c^4 r[t]^6))\[Mu] p\[Theta][
+    t] (8 (5 + 8 \[Nu]) r[t]^2 - 4 \[Nu]^2 pr[t]^2 r[t]^3 - 
+     4 (-5 + \[Nu] (20 + 3 \[Nu])) r[
+       t] (p\[Theta][t]^2 + Csc[\[Theta][t]]^2 p\[Phi][t]^2 + 
+        pr[t]^2 r[t]^2) + 
+     3 (1 + 5 (-1 + \[Nu]) \[Nu]) (p\[Theta][t]^2 + 
+        Csc[\[Theta][t]]^2 p\[Phi][t]^2 + pr[t]^2 r[t]^2)^2)}
+
+2PN ORDER: SPIN-SPIN INTERACTION TERMS
+
+SPIN1 - SPIN1 INTERACTION
+
+In[53]:= HS1S1 = Simplify[(G/c^2) (m2/(2 m1)) Sum[
+     S1v[[i]] S1v[[j]] D2Rinv[i, j], {i, 1, 3}, {j, 1, 3}]
+   ] // FullSimplify[#, {r > 0, 0 < \[Phi] < 2 \[Pi], 0 < \[Theta] < \[Pi]}] &
+
+Out[53]= (1/(8 c^2 G^2 M^3 m1 r^3))m2 (-((S1x^2 + S1y^2 - 2 S1z^2) (1 + 
+        3 Cos[2 \[Theta]])) + 
+   6 (S1x - S1y) (S1x + S1y) Cos[2 \[Phi]] Sin[\[Theta]]^2 + 
+   12 S1x S1z Cos[\[Phi]] Sin[2 \[Theta]] + 
+   12 S1y S1z Sin[2 \[Theta]] Sin[\[Phi]] + 
+   12 S1x S1y Sin[\[Theta]]^2 Sin[2 \[Phi]])
+
+In[54]:= momenta = {pr, p\[Phi], p\[Theta]};
+coords = {r, \[Phi], \[Theta]};
+(*Simply a derivation of Hamilton's equations of motion: *)
+momEOM = Table[-D[HS1S1, coords[[i]]], {i, 1, 3}] // 
+   FullSimplify[#, {r > 0, 0 < \[Phi] < 2 \[Pi], 0 < \[Theta] < \[Pi]}] &;
+coordEOM = 
+  Table[D[HS1S1, momenta[[i]]], {i, 1, 3}] // 
+   FullSimplify[#, {r > 0, 0 < \[Phi] < 2 \[Pi], 0 < \[Theta] < \[Pi]}] &;
+(*Generate a substitutation rule that replaces symbols for canonical \
+coordinates and momenta with corresponding functions of time:*)
+funSub = Join[Table[coords[[i]] -> coords[[i]][t], {i, 1, 3}] , 
+   Table[momenta[[i]] -> momenta[[i]][t], {i, 1, 3}] ];
+(*Generating equations of motion to be solved:*)
+RHS = Join[momEOM, coordEOM] /. funSub;
+LHS = Join[ Table[momenta[[i]]'[t], {i, 1, 3}], 
+   Table[coords[[i]]'[t], {i, 1, 3}]];
+EOM = Table[LHS[[i]] == RHS[[i]], {i, 1, 6}]
+
+Out[61]= {Derivative[1][pr][t] == (1/(8 c^2 G^2 M^3 m1 r[t]^4))
+  3 m2 (-((S1x^2 + S1y^2 - 2 S1z^2) (1 + 3 Cos[2 \[Theta][t]])) + 
+     6 (S1x - S1y) (S1x + S1y) Cos[2 \[Phi][t]] Sin[\[Theta][t]]^2 + 
+     12 S1x S1z Cos[\[Phi][t]] Sin[2 \[Theta][t]] + 
+     12 S1y S1z Sin[2 \[Theta][t]] Sin[\[Phi][t]] + 
+     12 S1x S1y Sin[\[Theta][t]]^2 Sin[2 \[Phi][t]]), 
+ Derivative[1][p\[Phi]][t] == (
+  3 m2 Sin[\[Theta][t]] (-S1y Cos[\[Phi][t]] + 
+     S1x Sin[\[Phi][t]]) (S1z Cos[\[Theta][t]] + 
+     Sin[\[Theta][t]] (S1x Cos[\[Phi][t]] + S1y Sin[\[Phi][t]])))/(
+  c^2 G^2 M^3 m1 r[t]^3), 
+ Derivative[1][p\[Theta]][t] == -((
+   3 m2 (4 S1z Cos[2 \[Theta][t]] (S1x Cos[\[Phi][t]] + S1y Sin[\[Phi][t]]) + 
+      Sin[2 \[Theta][t]] (S1x^2 + S1y^2 - 
+         2 S1z^2 + (S1x - S1y) (S1x + S1y) Cos[2 \[Phi][t]] + 
+         2 S1x S1y Sin[2 \[Phi][t]])))/(4 c^2 G^2 M^3 m1 r[t]^3)), 
+ Derivative[1][r][t] == 0, Derivative[1][\[Phi]][t] == 0, 
+ Derivative[1][\[Theta]][t] == 0}
+
+In[64]:= Omega1 = Grad[HS1S1, S1v] // FullSimplify
+Omega2 = Grad[HS1S1, S2v] // FullSimplify
+
+Out[64]= {(m2 (-S1x - 3 S1x Cos[2 \[Theta]] + 6 S1z Cos[\[Phi]] Sin[2 \[Theta]] + 
+    6 Sin[\[Theta]]^2 (S1x Cos[2 \[Phi]] + S1y Sin[2 \[Phi]])))/(
+ 4 c^2 G^2 M^3 m1 r^3), -((
+  m2 (S1y + 3 S1y Cos[2 \[Theta]] - 6 S1z Sin[2 \[Theta]] Sin[\[Phi]] + 
+     6 Sin[\[Theta]]^2 (S1y Cos[2 \[Phi]] - S1x Sin[2 \[Phi]])))/(
+  4 c^2 G^2 M^3 m1 r^3)), (
+ m2 (S1z + 3 S1z Cos[2 \[Theta]] + 
+    3 Sin[2 \[Theta]] (S1x Cos[\[Phi]] + S1y Sin[\[Phi]])))/(
+ 2 c^2 G^2 M^3 m1 r^3)}
+
+Out[65]= {0, 0, 0}
+
+In[67]:= spinEOM1 = {D[S1x[t], t] == Cross[Omega1, S1v][[1]], 
+  D[S1y[t], t] == Cross[Omega1, S1v][[2]], 
+  D[S1z[t], t] == Cross[Omega1, S1v][[3]]}
+
+Out[67]= {Derivative[1][S1x][t] == -((3 m2 S1y S1z)/(4 c^2 G^2 M^3 m1 r^3)) - (
+   9 m2 S1y S1z Cos[2 \[Theta]])/(4 c^2 G^2 M^3 m1 r^3) - (
+   3 m2 S1y S1z Cos[2 \[Phi]] Sin[\[Theta]]^2)/(2 c^2 G^2 M^3 m1 r^3) - (
+   3 m2 S1x S1y Cos[\[Phi]] Sin[2 \[Theta]])/(2 c^2 G^2 M^3 m1 r^3) - (
+   3 m2 S1y^2 Sin[2 \[Theta]] Sin[\[Phi]])/(2 c^2 G^2 M^3 m1 r^3) + (
+   3 m2 S1z^2 Sin[2 \[Theta]] Sin[\[Phi]])/(2 c^2 G^2 M^3 m1 r^3) + (
+   3 m2 S1x S1z Sin[\[Theta]]^2 Sin[2 \[Phi]])/(2 c^2 G^2 M^3 m1 r^3), 
+ Derivative[1][S1y][t] == (3 m2 S1x S1z)/(4 c^2 G^2 M^3 m1 r^3) + (
+   9 m2 S1x S1z Cos[2 \[Theta]])/(4 c^2 G^2 M^3 m1 r^3) - (
+   3 m2 S1x S1z Cos[2 \[Phi]] Sin[\[Theta]]^2)/(2 c^2 G^2 M^3 m1 r^3) + (
+   3 m2 S1x^2 Cos[\[Phi]] Sin[2 \[Theta]])/(2 c^2 G^2 M^3 m1 r^3) - (
+   3 m2 S1z^2 Cos[\[Phi]] Sin[2 \[Theta]])/(2 c^2 G^2 M^3 m1 r^3) + (
+   3 m2 S1x S1y Sin[2 \[Theta]] Sin[\[Phi]])/(2 c^2 G^2 M^3 m1 r^3) - (
+   3 m2 S1y S1z Sin[\[Theta]]^2 Sin[2 \[Phi]])/(2 c^2 G^2 M^3 m1 r^3), 
+ Derivative[1][S1z][t] == (3 m2 S1x S1y Cos[2 \[Phi]] Sin[\[Theta]]^2)/(
+   c^2 G^2 M^3 m1 r^3) + (3 m2 S1y S1z Cos[\[Phi]] Sin[2 \[Theta]])/(
+   2 c^2 G^2 M^3 m1 r^3) - (3 m2 S1x S1z Sin[2 \[Theta]] Sin[\[Phi]])/(
+   2 c^2 G^2 M^3 m1 r^3) - (3 m2 S1x^2 Sin[\[Theta]]^2 Sin[2 \[Phi]])/(
+   2 c^2 G^2 M^3 m1 r^3) + (3 m2 S1y^2 Sin[\[Theta]]^2 Sin[2 \[Phi]])/(
+   2 c^2 G^2 M^3 m1 r^3)}
+
+In[66]:= spinEOM2 = {D[S2x[t], t] == Cross[Omega2, S2v][[1]], 
+  D[S2y[t], t] == Cross[Omega2, S2v][[2]], 
+  D[S2z[t], t] == Cross[Omega2, S2v][[3]]}
+
+Out[66]= {Derivative[1][S2x][t] == 0, Derivative[1][S2y][t] == 0, 
+ Derivative[1][S2z][t] == 0}
+
+SPIN2 - SPIN2 INTERACTION
+
+In[68]:= HS2S2 = Simplify[(G/c^2) (m1/(2 m2)) Sum[
+      S2v[[i]] S2v[[j]] D2Rinv[i, j], {i, 1, 3}, {j, 1, 3}] /. R -> r G M
+   ] // FullSimplify[#, {r > 0, 0 < \[Phi] < 2 \[Pi], 0 < \[Theta] < \[Pi]}] &
+
+Out[68]= (1/(8 c^2 G^2 M^3 m2 r^3))m1 (-((S2x^2 + S2y^2 - 2 S2z^2) (1 + 
+        3 Cos[2 \[Theta]])) + 
+   6 (S2x - S2y) (S2x + S2y) Cos[2 \[Phi]] Sin[\[Theta]]^2 + 
+   12 S2x S2z Cos[\[Phi]] Sin[2 \[Theta]] + 
+   12 S2y S2z Sin[2 \[Theta]] Sin[\[Phi]] + 
+   12 S2x S2y Sin[\[Theta]]^2 Sin[2 \[Phi]])
+
+In[69]:= momenta = {pr, p\[Phi], p\[Theta]};
+coords = {r, \[Phi], \[Theta]};
+(*Simply a derivation of Hamilton's equations of motion: *)
+momEOM = Table[-D[HS2S2, coords[[i]]], {i, 1, 3}] // 
+   FullSimplify[#, {r > 0, 0 < \[Phi] < 2 \[Pi], 0 < \[Theta] < \[Pi]}] &;
+coordEOM = 
+  Table[D[HS2S2, momenta[[i]]], {i, 1, 3}] // 
+   FullSimplify[#, {r > 0, 0 < \[Phi] < 2 \[Pi], 0 < \[Theta] < \[Pi]}] &;
+(*Generate a substitutation rule that replaces symbols for canonical \
+coordinates and momenta with corresponding functions of time:*)
+funSub = Join[Table[coords[[i]] -> coords[[i]][t], {i, 1, 3}] , 
+   Table[momenta[[i]] -> momenta[[i]][t], {i, 1, 3}] ];
+(*Generating equations of motion to be solved:*)
+RHS = Join[momEOM, coordEOM] /. funSub;
+LHS = Join[ Table[momenta[[i]]'[t], {i, 1, 3}], 
+   Table[coords[[i]]'[t], {i, 1, 3}]];
+EOM = Table[LHS[[i]] == RHS[[i]], {i, 1, 6}]
+
+Out[76]= {Derivative[1][pr][t] == (1/(8 c^2 G^2 M^3 m2 r[t]^4))
+  3 m1 (-((S2x^2 + S2y^2 - 2 S2z^2) (1 + 3 Cos[2 \[Theta][t]])) + 
+     6 (S2x - S2y) (S2x + S2y) Cos[2 \[Phi][t]] Sin[\[Theta][t]]^2 + 
+     12 S2x S2z Cos[\[Phi][t]] Sin[2 \[Theta][t]] + 
+     12 S2y S2z Sin[2 \[Theta][t]] Sin[\[Phi][t]] + 
+     12 S2x S2y Sin[\[Theta][t]]^2 Sin[2 \[Phi][t]]), 
+ Derivative[1][p\[Phi]][t] == (
+  3 m1 Sin[\[Theta][t]] (-S2y Cos[\[Phi][t]] + 
+     S2x Sin[\[Phi][t]]) (S2z Cos[\[Theta][t]] + 
+     Sin[\[Theta][t]] (S2x Cos[\[Phi][t]] + S2y Sin[\[Phi][t]])))/(
+  c^2 G^2 M^3 m2 r[t]^3), 
+ Derivative[1][p\[Theta]][t] == -((
+   3 m1 (4 S2z Cos[2 \[Theta][t]] (S2x Cos[\[Phi][t]] + S2y Sin[\[Phi][t]]) + 
+      Sin[2 \[Theta][t]] (S2x^2 + S2y^2 - 
+         2 S2z^2 + (S2x - S2y) (S2x + S2y) Cos[2 \[Phi][t]] + 
+         2 S2x S2y Sin[2 \[Phi][t]])))/(4 c^2 G^2 M^3 m2 r[t]^3)), 
+ Derivative[1][r][t] == 0, Derivative[1][\[Phi]][t] == 0, 
+ Derivative[1][\[Theta]][t] == 0}
+
+In[77]:= Omega1 = Grad[HS2S2, S1v] // FullSimplify
+Omega2 = Grad[HS2S2, S2v] // FullSimplify
+
+Out[77]= {0, 0, 0}
+
+Out[78]= {(m1 (-S2x - 3 S2x Cos[2 \[Theta]] + 6 S2z Cos[\[Phi]] Sin[2 \[Theta]] + 
+    6 Sin[\[Theta]]^2 (S2x Cos[2 \[Phi]] + S2y Sin[2 \[Phi]])))/(
+ 4 c^2 G^2 M^3 m2 r^3), -((
+  m1 (S2y + 3 S2y Cos[2 \[Theta]] - 6 S2z Sin[2 \[Theta]] Sin[\[Phi]] + 
+     6 Sin[\[Theta]]^2 (S2y Cos[2 \[Phi]] - S2x Sin[2 \[Phi]])))/(
+  4 c^2 G^2 M^3 m2 r^3)), (
+ m1 (S2z + 3 S2z Cos[2 \[Theta]] + 
+    3 Sin[2 \[Theta]] (S2x Cos[\[Phi]] + S2y Sin[\[Phi]])))/(
+ 2 c^2 G^2 M^3 m2 r^3)}
+
+In[79]:= spinEOM1 = {D[S1x[t], t] == Cross[Omega1, S1v][[1]], 
+  D[S1y[t], t] == Cross[Omega1, S1v][[2]], 
+  D[S1z[t], t] == Cross[Omega1, S1v][[3]]}
+
+Out[79]= {Derivative[1][S1x][t] == 0, Derivative[1][S1y][t] == 0, 
+ Derivative[1][S1z][t] == 0}
+
+In[80]:= spinEOM2 = {D[S2x[t], t] == Cross[Omega2, S2v][[1]], 
+  D[S2y[t], t] == Cross[Omega2, S2v][[2]], 
+  D[S2z[t], t] == Cross[Omega2, S2v][[3]]}
+
+Out[80]= {Derivative[1][S2x][t] == -((3 m1 S2y S2z)/(4 c^2 G^2 M^3 m2 r^3)) - (
+   9 m1 S2y S2z Cos[2 \[Theta]])/(4 c^2 G^2 M^3 m2 r^3) - (
+   3 m1 S2y S2z Cos[2 \[Phi]] Sin[\[Theta]]^2)/(2 c^2 G^2 M^3 m2 r^3) - (
+   3 m1 S2x S2y Cos[\[Phi]] Sin[2 \[Theta]])/(2 c^2 G^2 M^3 m2 r^3) - (
+   3 m1 S2y^2 Sin[2 \[Theta]] Sin[\[Phi]])/(2 c^2 G^2 M^3 m2 r^3) + (
+   3 m1 S2z^2 Sin[2 \[Theta]] Sin[\[Phi]])/(2 c^2 G^2 M^3 m2 r^3) + (
+   3 m1 S2x S2z Sin[\[Theta]]^2 Sin[2 \[Phi]])/(2 c^2 G^2 M^3 m2 r^3), 
+ Derivative[1][S2y][t] == (3 m1 S2x S2z)/(4 c^2 G^2 M^3 m2 r^3) + (
+   9 m1 S2x S2z Cos[2 \[Theta]])/(4 c^2 G^2 M^3 m2 r^3) - (
+   3 m1 S2x S2z Cos[2 \[Phi]] Sin[\[Theta]]^2)/(2 c^2 G^2 M^3 m2 r^3) + (
+   3 m1 S2x^2 Cos[\[Phi]] Sin[2 \[Theta]])/(2 c^2 G^2 M^3 m2 r^3) - (
+   3 m1 S2z^2 Cos[\[Phi]] Sin[2 \[Theta]])/(2 c^2 G^2 M^3 m2 r^3) + (
+   3 m1 S2x S2y Sin[2 \[Theta]] Sin[\[Phi]])/(2 c^2 G^2 M^3 m2 r^3) - (
+   3 m1 S2y S2z Sin[\[Theta]]^2 Sin[2 \[Phi]])/(2 c^2 G^2 M^3 m2 r^3), 
+ Derivative[1][S2z][t] == (3 m1 S2x S2y Cos[2 \[Phi]] Sin[\[Theta]]^2)/(
+   c^2 G^2 M^3 m2 r^3) + (3 m1 S2y S2z Cos[\[Phi]] Sin[2 \[Theta]])/(
+   2 c^2 G^2 M^3 m2 r^3) - (3 m1 S2x S2z Sin[2 \[Theta]] Sin[\[Phi]])/(
+   2 c^2 G^2 M^3 m2 r^3) - (3 m1 S2x^2 Sin[\[Theta]]^2 Sin[2 \[Phi]])/(
+   2 c^2 G^2 M^3 m2 r^3) + (3 m1 S2y^2 Sin[\[Theta]]^2 Sin[2 \[Phi]])/(
+   2 c^2 G^2 M^3 m2 r^3)}
+
+SPIN1 - SPIN2 INTERACTION
+
+In[81]:= HS1S2 = Simplify[(G/c^2) Sum[
+      S1v[[i]] S2v[[j]] D2Rinv[i, j], {i, 1, 3}, {j, 1, 3}] /. R -> r G M
+   ] // FullSimplify[#, {r > 0, 0 < \[Phi] < 2 \[Pi], 0 < \[Theta] < \[Pi]}] &
+
+Out[81]= -((S1x S2x + S1y S2y + S1z S2z - 
+  3 (S1z Cos[\[Theta]] + 
+     Sin[\[Theta]] (S1x Cos[\[Phi]] + S1y Sin[\[Phi]])) (S2z Cos[\[Theta]] + 
+     Sin[\[Theta]] (S2x Cos[\[Phi]] + S2y Sin[\[Phi]])))/(c^2 G^2 M^3 r^3))
+
+In[82]:= momenta = {pr, p\[Phi], p\[Theta]};
+coords = {r, \[Phi], \[Theta]};
+(*Simply a derivation of Hamilton's equations of motion: *)
+momEOM = Table[-D[HS1S2, coords[[i]]], {i, 1, 3}] // 
+   FullSimplify[#, {r > 0, 0 < \[Phi] < 2 \[Pi], 0 < \[Theta] < \[Pi]}] &;
+coordEOM = 
+  Table[D[HS1S2, momenta[[i]]], {i, 1, 3}] // 
+   FullSimplify[#, {r > 0, 0 < \[Phi] < 2 \[Pi], 0 < \[Theta] < \[Pi]}] &;
+(*Generate a substitutation rule that replaces symbols for canonical \
+coordinates and momenta with corresponding functions of time:*)
+funSub = Join[Table[coords[[i]] -> coords[[i]][t], {i, 1, 3}] , 
+   Table[momenta[[i]] -> momenta[[i]][t], {i, 1, 3}] ];
+(*Generating equations of motion to be solved:*)
+RHS = Join[momEOM, coordEOM] /. funSub;
+LHS = Join[ Table[momenta[[i]]'[t], {i, 1, 3}], 
+   Table[coords[[i]]'[t], {i, 1, 3}]];
+EOM = Table[LHS[[i]] == RHS[[i]], {i, 1, 6}]
+
+Out[89]= {Derivative[1][pr][t] == -((
+   3 (S1x S2x + S1y S2y + S1z S2z - 
+      3 (S1z Cos[\[Theta][t]] + 
+         Sin[\[Theta][t]] (S1x Cos[\[Phi][t]] + 
+            S1y Sin[\[Phi][t]])) (S2z Cos[\[Theta][t]] + 
+         Sin[\[Theta][t]] (S2x Cos[\[Phi][t]] + S2y Sin[\[Phi][t]]))))/(
+   c^2 G^2 M^3 r[t]^4)), 
+ Derivative[1][p\[Phi]][t] == -(1/(c^2 G^2 M^3 r[t]^3))
+   3 Sin[\[Theta][
+      t]] (Cos[\[Theta][
+         t]] ((S1z S2y + S1y S2z) Cos[\[Phi][t]] - (S1z S2x + 
+            S1x S2z) Sin[\[Phi][t]]) + 
+      Sin[\[Theta][
+         t]] ((S1y S2x + S1x S2y) Cos[2 \[Phi][t]] + (-S1x S2x + S1y S2y) Sin[
+           2 \[Phi][t]])), 
+ Derivative[1][p\[Theta]][t] == (1/(
+  c^2 G^2 M^3 r[
+    t]^3))(-3 Cos[
+      2 \[Theta][
+        t]] ((S1z S2x + S1x S2z) Cos[\[Phi][t]] + (S1z S2y + 
+          S1y S2z) Sin[\[Phi][t]]) - 
+    3/2 Sin[2 \[Theta][t]] (S1x S2x + S1y S2y - 
+       2 S1z S2z + (S1x S2x - S1y S2y) Cos[
+         2 \[Phi][t]] + (S1y S2x + S1x S2y) Sin[2 \[Phi][t]])), 
+ Derivative[1][r][t] == 0, Derivative[1][\[Phi]][t] == 0, 
+ Derivative[1][\[Theta]][t] == 0}
+
+In[90]:= Omega1 = Grad[HS1S2, S1v] // FullSimplify
+Omega2 = Grad[HS1S2, S2v] // FullSimplify
+
+Out[90]= {-((S2x - 
+   3 Cos[\[Phi]] Sin[\[Theta]] (S2z Cos[\[Theta]] + 
+      Sin[\[Theta]] (S2x Cos[\[Phi]] + S2y Sin[\[Phi]])))/(
+  c^2 G^2 M^3 r^3)), -((
+  S2y - 3 Sin[\[Theta]] Sin[\[Phi]] (S2z Cos[\[Theta]] + 
+      Sin[\[Theta]] (S2x Cos[\[Phi]] + S2y Sin[\[Phi]])))/(
+  c^2 G^2 M^3 r^3)), -((
+  S2z - 3 Cos[\[Theta]] (S2z Cos[\[Theta]] + 
+      Sin[\[Theta]] (S2x Cos[\[Phi]] + S2y Sin[\[Phi]])))/(c^2 G^2 M^3 r^3))}
+
+Out[91]= {-((S1x - 
+   3 Cos[\[Phi]] Sin[\[Theta]] (S1z Cos[\[Theta]] + 
+      Sin[\[Theta]] (S1x Cos[\[Phi]] + S1y Sin[\[Phi]])))/(
+  c^2 G^2 M^3 r^3)), -((
+  S1y - 3 Sin[\[Theta]] Sin[\[Phi]] (S1z Cos[\[Theta]] + 
+      Sin[\[Theta]] (S1x Cos[\[Phi]] + S1y Sin[\[Phi]])))/(
+  c^2 G^2 M^3 r^3)), -((
+  S1z - 3 Cos[\[Theta]] (S1z Cos[\[Theta]] + 
+      Sin[\[Theta]] (S1x Cos[\[Phi]] + S1y Sin[\[Phi]])))/(c^2 G^2 M^3 r^3))}
+
+In[92]:= spinEOM1 = {D[S1x[t], t] == Cross[Omega1, S1v][[1]], 
+  D[S1y[t], t] == Cross[Omega1, S1v][[2]], 
+  D[S1z[t], t] == Cross[Omega1, S1v][[3]]}
+spinEOM2 = {D[S2x[t], t] == Cross[Omega2, S2v][[1]], 
+  D[S2y[t], t] == Cross[Omega2, S2v][[2]], 
+  D[S2z[t], t] == Cross[Omega2, S2v][[3]]}
+
+Out[92]= {Derivative[1][S1x][t] == -((S1z S2y)/(c^2 G^2 M^3 r^3)) + (S1y S2z)/(
+   c^2 G^2 M^3 r^3) - (3 S1y S2z Cos[\[Theta]]^2)/(c^2 G^2 M^3 r^3) - (
+   3 S1y S2x Cos[\[Theta]] Cos[\[Phi]] Sin[\[Theta]])/(c^2 G^2 M^3 r^3) - (
+   3 S1y S2y Cos[\[Theta]] Sin[\[Theta]] Sin[\[Phi]])/(c^2 G^2 M^3 r^3) + (
+   3 S1z S2z Cos[\[Theta]] Sin[\[Theta]] Sin[\[Phi]])/(c^2 G^2 M^3 r^3) + (
+   3 S1z S2x Cos[\[Phi]] Sin[\[Theta]]^2 Sin[\[Phi]])/(c^2 G^2 M^3 r^3) + (
+   3 S1z S2y Sin[\[Theta]]^2 Sin[\[Phi]]^2)/(c^2 G^2 M^3 r^3), 
+ Derivative[1][S1y][t] == (S1z S2x)/(c^2 G^2 M^3 r^3) - (S1x S2z)/(
+   c^2 G^2 M^3 r^3) + (3 S1x S2z Cos[\[Theta]]^2)/(c^2 G^2 M^3 r^3) + (
+   3 S1x S2x Cos[\[Theta]] Cos[\[Phi]] Sin[\[Theta]])/(c^2 G^2 M^3 r^3) - (
+   3 S1z S2z Cos[\[Theta]] Cos[\[Phi]] Sin[\[Theta]])/(c^2 G^2 M^3 r^3) - (
+   3 S1z S2x Cos[\[Phi]]^2 Sin[\[Theta]]^2)/(c^2 G^2 M^3 r^3) + (
+   3 S1x S2y Cos[\[Theta]] Sin[\[Theta]] Sin[\[Phi]])/(c^2 G^2 M^3 r^3) - (
+   3 S1z S2y Cos[\[Phi]] Sin[\[Theta]]^2 Sin[\[Phi]])/(c^2 G^2 M^3 r^3), 
+ Derivative[1][S1z][t] == -((S1y S2x)/(c^2 G^2 M^3 r^3)) + (S1x S2y)/(
+   c^2 G^2 M^3 r^3) + (3 S1y S2z Cos[\[Theta]] Cos[\[Phi]] Sin[\[Theta]])/(
+   c^2 G^2 M^3 r^3) + (3 S1y S2x Cos[\[Phi]]^2 Sin[\[Theta]]^2)/(
+   c^2 G^2 M^3 r^3) - (3 S1x S2z Cos[\[Theta]] Sin[\[Theta]] Sin[\[Phi]])/(
+   c^2 G^2 M^3 r^3) - (3 S1x S2x Cos[\[Phi]] Sin[\[Theta]]^2 Sin[\[Phi]])/(
+   c^2 G^2 M^3 r^3) + (3 S1y S2y Cos[\[Phi]] Sin[\[Theta]]^2 Sin[\[Phi]])/(
+   c^2 G^2 M^3 r^3) - (3 S1x S2y Sin[\[Theta]]^2 Sin[\[Phi]]^2)/(
+   c^2 G^2 M^3 r^3)}
+
+Out[93]= {Derivative[1][S2x][t] == (S1z S2y)/(c^2 G^2 M^3 r^3) - (S1y S2z)/(
+   c^2 G^2 M^3 r^3) - (3 S1z S2y Cos[\[Theta]]^2)/(c^2 G^2 M^3 r^3) - (
+   3 S1x S2y Cos[\[Theta]] Cos[\[Phi]] Sin[\[Theta]])/(c^2 G^2 M^3 r^3) - (
+   3 S1y S2y Cos[\[Theta]] Sin[\[Theta]] Sin[\[Phi]])/(c^2 G^2 M^3 r^3) + (
+   3 S1z S2z Cos[\[Theta]] Sin[\[Theta]] Sin[\[Phi]])/(c^2 G^2 M^3 r^3) + (
+   3 S1x S2z Cos[\[Phi]] Sin[\[Theta]]^2 Sin[\[Phi]])/(c^2 G^2 M^3 r^3) + (
+   3 S1y S2z Sin[\[Theta]]^2 Sin[\[Phi]]^2)/(c^2 G^2 M^3 r^3), 
+ Derivative[1][S2y][t] == -((S1z S2x)/(c^2 G^2 M^3 r^3)) + (S1x S2z)/(
+   c^2 G^2 M^3 r^3) + (3 S1z S2x Cos[\[Theta]]^2)/(c^2 G^2 M^3 r^3) + (
+   3 S1x S2x Cos[\[Theta]] Cos[\[Phi]] Sin[\[Theta]])/(c^2 G^2 M^3 r^3) - (
+   3 S1z S2z Cos[\[Theta]] Cos[\[Phi]] Sin[\[Theta]])/(c^2 G^2 M^3 r^3) - (
+   3 S1x S2z Cos[\[Phi]]^2 Sin[\[Theta]]^2)/(c^2 G^2 M^3 r^3) + (
+   3 S1y S2x Cos[\[Theta]] Sin[\[Theta]] Sin[\[Phi]])/(c^2 G^2 M^3 r^3) - (
+   3 S1y S2z Cos[\[Phi]] Sin[\[Theta]]^2 Sin[\[Phi]])/(c^2 G^2 M^3 r^3), 
+ Derivative[1][S2z][t] == (S1y S2x)/(c^2 G^2 M^3 r^3) - (S1x S2y)/(
+   c^2 G^2 M^3 r^3) + (3 S1z S2y Cos[\[Theta]] Cos[\[Phi]] Sin[\[Theta]])/(
+   c^2 G^2 M^3 r^3) + (3 S1x S2y Cos[\[Phi]]^2 Sin[\[Theta]]^2)/(
+   c^2 G^2 M^3 r^3) - (3 S1z S2x Cos[\[Theta]] Sin[\[Theta]] Sin[\[Phi]])/(
+   c^2 G^2 M^3 r^3) - (3 S1x S2x Cos[\[Phi]] Sin[\[Theta]]^2 Sin[\[Phi]])/(
+   c^2 G^2 M^3 r^3) + (3 S1y S2y Cos[\[Phi]] Sin[\[Theta]]^2 Sin[\[Phi]])/(
+   c^2 G^2 M^3 r^3) - (3 S1y S2x Sin[\[Theta]]^2 Sin[\[Phi]]^2)/(
+   c^2 G^2 M^3 r^3)}
