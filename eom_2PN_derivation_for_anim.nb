@@ -1,4 +1,4 @@
-BINARY BLACK HOLE SYSTEM UP TO 2PN
+BINARY BLACK HOLE SYSTEM UP TO 2PN - DERIVATION FOR ANIMATION
 
 The following Mathematica notebook presents the required physics to describe the motion of a binary black hole system up to the second post-Newtonian order. Thus, gravitational wave emission is not considered and consequently the system ought to be conserved. Apart from the individual Hamiltonian order components, we provide a calculation of the system's equations of motion. The whole Mathematica code uses the formalism of the article: Integrability of eccentric, spinning black hole binaries up to second post-Newtonian order - Sashwat Tanay, Leo C. Stein, José T. Gálvez Ghersi, 2021; arXiv:2012.06586.
 
