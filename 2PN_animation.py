@@ -83,10 +83,6 @@ S2x0 = -2/7 * S2m                   # Initial x-component of spin vector for bla
 S2y0 = -3/7 * S2m                   # Initial y-component of spin vector for black hole 2
 S2z0 = 6/7 * S2m                    # Initial z-component of spin vector for black hole 2
 
-Lx0 = 0                             # Initial x-component of angular momentum
-Ly0 = 0                             # Initial y-component of angular momentum
-Lz0 = mu * np.sqrt(r_0)/10             # Initial z-component of angular momentum
-
 
 def cot(x):
     return np.cos(x) / np.sin(x)
