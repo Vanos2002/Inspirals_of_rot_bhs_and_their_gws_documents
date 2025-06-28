@@ -4,7 +4,6 @@ import numpy as np
 from scipy.integrate import solve_ivp
 from scipy.integrate import cumulative_trapezoid
 import matplotlib as mpl
-mpl.rcParams['agg.path.chunksize'] = 100000  # or a larger value, e.g., 100000
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.animation import FuncAnimation
@@ -18,15 +17,16 @@ from scipy.optimize import minimize
 from joblib import Parallel, delayed
 
 
-np.set_printoptions(precision=15)
+mpl.rcParams['agg.path.chunksize'] = 100000  # We employ for high resolution matplotlib plotting
+np.set_printoptions(precision=15)   # Printing values will be evaluated to 15 digits
 
 # Constants (changed for a geometrized unit system)
-G = 1.0       #6.6743e-11  # Gravitational constant in [m**3*kg**-1*s**-2]
-c = 1.0       #299792458  # Speed of light in [m*s**-1]
+G = 1.0         # Gravitational constant
+c = 1.0       # Speed of light
 
-# Black hole masses (geometrized, represents the number of Solar masses)
-m1 = 0.1 #1E+30  # Mass of black hole 1
-m2 = 0.9   #1.1E+30  # Mass of black hole 2
+# Black hole masses (geometrized units)
+m1 = 0.5   # Mass of black hole 1
+m2 = 0.5   # Mass of black hole 2
 
 q = m1 / m2  # Mass ratio of the two black holes
 
@@ -34,45 +34,27 @@ q = m1 / m2  # Mass ratio of the two black holes
 M = m1 + m2  # Total mass of the system
 mu = m1 * m2 / M  # Reduced mass
 nu = mu / M   # Symmetric mass ratio
-GM = G * M
+GM = G * M   # Abbreviation for a frequent product term
 
 # Spin parameters
 chi1 = -0.6  # Dimensionless spin parameter for the first black hole
-chi2 = 1.0  # Dimensionless spin parameter for the second black hole
+chi2 = 1.0   # Dimensionless spin parameter for the second black hole
 
-# Effective spin constants
+# Effective spin constants (employed for effective spin definition)
 sigma1 = 1.0 + 3 * m2 / (4 * m1)
 sigma2 = 1.0 + 3 * m1 / (4 * m2)
 
+# Total spin magnitude
 S1m = chi1 * G * m1**2 / c
 S2m = chi2 * G * m2**2 / c
 
-# Initial position of each black hole centre
-x01 = 12.5
-y01 = 0.0
-z01 = 0.0
-x02 = - 12.5
-y02 = 0.0
-z02 = 0.0
 
-# Initial axis separation
-xdiff = x01 - x02
-ydiff = y01 - y02
-zdiff = z01 - z02
 
-# Initial centre of mass position
-r_0x = (xdiff)
-r_0y = (ydiff)
-r_0z = (zdiff)
-r_sep = np.sqrt(r_0x**2 + r_0y**2 + r_0z**2)
-r_comx = (m1 * x01 + m2 * x02)/( M)
-r_comy = (m1 * y01 + m2 * y02)/( M)
-r_comz = (m1 * z01 + m2 * z02)/( M)
+# INITIAL CONDITIONS IN THE COM FRAME
+r_0 = 30   # Relative separation (in M)
+pr_0 = 2e-16    # Radial momentum (conjugate to r) - (arbitrary units)
 
-# Initial conditions for the system's centre of mass
-r_0 = r_sep
-pr_0 = 2e-16
-
+# Initial spin vector components (ensure its normalization equals S1m, respect. S2m)
 S1x0 = S1m * 2/3 # Initial x-component of spin vector for black hole 1
 S1y0 = -S1m * 1/3  # Initial y-component of spin vector for black hole 1
 S1z0 = -S1m  * 2/3  # Initial z-component of spin vector for black hole 1
@@ -81,26 +63,25 @@ S2x0 = -S2m * 2/7   # Initial x-component of spin vector for black hole 2
 S2y0 = -S2m * 3/7 # Initial y-component of spin vector for black hole 2
 S2z0 = S2m * 6/7  # Initial z-component of spin vector for black hole 2
 
+# Initial orbital angular momentum vector components
 Lx0 = 0.0  # Initial x-component of angular momentum
-Ly0 = 0.0
-Lz0 = mu * np.sqrt(r_0)/10
+Ly0 = 0.0    # Initial y-component of angular momentum
+Lz0 = mu * np.sqrt(r_0)         # Initial y-component of angular momentum
 
-G_r = 6.67430e-11        # m^3 kg^-1 s^-2
-c_r = 299792458          # m/s
-M_solar = 1.98847e30   # kg
+# Constants in standardized units
+G_r = 6.67430e-11        # m^3 kg^-1 s^-2 - Gravitational constant
+c_r = 299792458          # m/s - Speed of light
+M_solar = 1.98847e30     # kg - Solar mass
 
-# Example: for a 60 solar mass system
-M_r = 60 * M_solar
+# Total system mass (Real physical mass)
+M_r = 60 * M_solar       # kg
 
+# Relative separation calculation to SI units
 r_sep_phys = r_0 * G_r * M_r / c_r**2
 print("Initial separation in physical units (m):", r_sep_phys)
-#phi_0 = np.arctan2(r_0y, r_0x)
-#theta_0 = np.arccos(r_0z/r_0)  
-
-#pphi_0 = 0.89 * np.sqrt(r_0)    #1.034 * np.sqrt(r_0)
-#ptheta_0 = 0.489002 * np.sqrt(r_0)
 
 
+# FUNCTION DEFINITIONS
 def spin_vectors(S1x, S1y, S1z, S2x, S2y, S2z):
 
     S1 = np.array([S1x, S1y, S1z])
@@ -110,7 +91,6 @@ def spin_vectors(S1x, S1y, S1z, S2x, S2y, S2z):
 
 
 def angular_momentum(Lx, Ly, Lz):
-    # Dimensionful angular momentum vector in SI units (not! in geometrical mass-specific units)
     
     L = np.array([Lx, Ly, Lz])
     
@@ -123,7 +103,7 @@ def total_angular_momentum(Lx, Ly, Lz, S1x, S1y, S1z, S2x, S2y, S2z):
     return np.array([Lx, Ly, Lz]) + np.array([S1x, S1y, S1z]) + np.array([S2x, S2y, S2z])
 
 
-# Defining the Hamiltonian dynamics up to the second post-Newtonian order
+# Defining the Hamiltonian dynamics up to the second post-Newtonian order - we define each term individually for the possibility of examining up to a certain level
 def HN(r, pr, Lx, Ly, Lz):
     
     return (1/2)*(pr**2 + (-2*r + (Lx**2 + Ly**2 + Lz**2)/(G**2*M**2*mu**2))/r**2)*mu
@@ -144,8 +124,6 @@ def H2PN(r, pr, Lx, Ly, Lz):
     (8*(((Lx**2 + Ly**2 + Lz**2)*(5 + 8*nu))/(G**2*M**2*r**2*mu**2) + pr**2*(5 + 11*nu)))/r**2 + 
     (2*(-5*pr**4*nu**2 - (2*(Lx**2 + Ly**2 + Lz**2)*pr**2*nu**2)/(G**2*M**2*r**2*mu**2) + 
        (pr**2 + (Lx**2 + Ly**2 + Lz**2)/(G**2*M**2*r**2*mu**2))**2*(5 - nu*(20 + 3*nu))))/r))
-    
-
 
 def HS1S1(r, Lx, Ly, Lz, S1x, S1y, S1z):
 
@@ -178,11 +156,10 @@ def Hamiltonian(r, pr, Lx, Ly, Lz, S1x, S1y, S1z, S2x, S2y, S2z):
         + HS1S2(r, Lx, Ly, Lz, S1x, S1y, S1z, S2x, S2y, S2z))
 
 
-# Equations (EoM) that govern the motion of the binary black hole system's centre of mass
+# Equations (EoM) that govern the motion of the binary black hole system's center of mass (derived in Mathematica - via 
 def equations_of_motion(tau, state):
     r, pr, Lx, Ly, Lz, S1x, S1y, S1z, S2x, S2y, S2z = state
     
-
     #DPRDTAU TERMS
 
     dprdtau_newtonian = (Lx**2 + Ly**2 + Lz**2)/(G**2*M**2*r**3*mu) - mu/r**2
@@ -348,6 +325,8 @@ def equations_of_motion(tau, state):
 
     dS2dtau_S1S2 = np.cross(OmegaS2_S1S2, np.array([S2x, S2y, S2z]))
 
+    
+    # Summation of individual terms (remove respective PN terms for different PN examination)
     drdtau = drdtau_newtonian + drdtau_1PN + drdtau_15PN + drdtau_2PN + drdtau_S1S1 + drdtau_S2S2 + drdtau_S1S2
 
     dprdtau = dprdtau_newtonian + dprdtau_1PN + dprdtau_15PN + dprdtau_2PN + dprdtau_S1S1 + dprdtau_S2S2 + dprdtau_S1S2
@@ -364,14 +343,14 @@ def equations_of_motion(tau, state):
 # Define the initial state and time span
 initial_state = [r_0, pr_0, Lx0, Ly0, Lz0, S1x0, S1y0, S1z0, S2x0, S2y0, S2z0]
 
-Tp = 2 * np.pi * np.sqrt(r_0**3 * GM**2)  # Orbital period
+Tp = 2 * np.pi * np.sqrt(r_0**3 * GM**2)  # Orbital period (one Newtonian)
 t_span = (0, 100 * Tp)  # Start and end times
 tau = np.linspace(0, 100 * Tp, 1000000)  # Time points for evaluation
 
 # Ensure tau is within t_span
 tau = np.clip(tau, t_span[0], t_span[1])
 
-# Solving
+# Solving the equations of motion with an 8th order RK SciPy integrator
 solution = solve_ivp(
     equations_of_motion,
     t_span,
@@ -383,6 +362,7 @@ solution = solve_ivp(
 )
 r_sol, pr_sol, Lx_sol, Ly_sol, Lz_sol, S1x_sol, S1y_sol, S1z_sol, S2x_sol, S2y_sol, S2z_sol = solution.y
 
+# Ensure different quantities have the same length
 print("len(tau):", len(tau))
 print("len(r_sol):", len(r_sol))
 print("len(pr_sol):", len(pr_sol))
@@ -396,41 +376,11 @@ print("len(S2y_sol):", len(S2y_sol))
 print("len(S1z_sol):", len(S1z_sol))
 print("len(S2z_sol):", len(S2z_sol))
 
+# Set a global labelsize for plots
 plt.rcParams['xtick.labelsize'] = 15
 plt.rcParams['ytick.labelsize'] = 15
 
-
-
-
-#S1v_sol = np.array([S1x_sol, S1y_sol, S1z_sol])
-#S2v_sol = np.array([S2x_sol, S2y_sol, S2z_sol])
-
-#S1_magnitudes = np.linalg.norm(S1v_sol, axis=0)
-#S2_magnitudes = np.linalg.norm(S2v_sol, axis=0)
-#S1v_sol = S1v_sol * (S1m / S1_magnitudes)
-#S2v_sol = S2v_sol * (S2m / S2_magnitudes)
-
-#print("len(S1v_sol):", len(S1v_sol))
-#print("len(S2v_sol):", len(S2v_sol))
-
-#if S1v_sol.shape[0] == 3:
-   # S1v_sol = S1v_sol.T
-#if S2v_sol.shape[0] == 3:
-    #S2v_sol = S2v_sol.T
-
-#total_spin = S1v_sol + S2v_sol  # shape (N, 3)
-#Sx, Sy, Sz = total_spin[:,0], total_spin[:,1], total_spin[:,2]
-#S_mag = np.linalg.norm(total_spin, axis=1)
-
-
-
-# Compute spin magnitudes at each time step
-#S1_mag = np.linalg.norm(S1v_sol, axis=1)  # shape (N,)
-#S2_mag = np.linalg.norm(S2v_sol, axis=1)  # shape (N,)
-
-# Compute relative errors (assuming S1m and S2m are the intended constant magnitudes)
-
-
+# Extract the spin vectors
 S1_vectors = np.array([
     [S1x_sol[i], S1y_sol[i], S1z_sol[i]]
     for i in range(len(tau))
@@ -446,9 +396,11 @@ S1_vectors = S1_vectors * (S1m / S1_mag[:, np.newaxis])
 S2_vectors = S2_vectors * (S2m / S2_mag[:, np.newaxis])
 S_mag = np.linalg.norm(S1_vectors + S2_vectors, axis=1)
 
+# Relative error of spins
 rel_err_S1 = np.abs(S1_mag - S1m) / np.abs(S1m)
 rel_err_S2 = np.abs(S2_mag - S2m) / np.abs(S2m)
 
+# Plot together the individual spin magnitudes and the total spin magnitude
 plt.figure(figsize=(10,6))
 plt.plot(tau, S1_mag, label=r'$|\mathbf{S}_1|$')
 plt.plot(tau, S2_mag, label=r'$|\mathbf{S}_2|$')
@@ -460,6 +412,7 @@ plt.legend()
 plt.grid(True)
 plt.show()
 
+# Conservation of individual spin magnitudes check
 plt.figure(figsize=(10,6))
 plt.ylim(1e-16, 1e-13)
 plt.xlim(tau[0], tau[-1])
@@ -473,7 +426,7 @@ plt.legend(loc='upper left')
 plt.grid(True, which='both', linestyle='--', linewidth=0.5)
 plt.show()
 
-# S_mag: total spin magnitude at each time step (e.g., S_mag = np.linalg.norm(S1v_sol + S2v_sol, axis=1))
+# Examination of spin magnitude relative error - Note this quantity is necessarily NOT a conservative quantity, rather a measure of symmetry
 S_mag0 = S_mag[0]
 rel_err_Smag = np.abs(S_mag - S_mag0) / (np.abs(S_mag0) )
 
@@ -488,11 +441,12 @@ plt.legend()
 plt.grid(True, which='both', linestyle='--', linewidth=0.5)
 plt.show()
 
+# Extract the angular momentum vector and check the relative error 
 L_vectors = np.array([Lx_sol, Ly_sol, Lz_sol]).T  # shape (N, 3)
 angular_momentum_magnitude = np.linalg.norm(L_vectors, axis=1)
 L0 = angular_momentum_magnitude[0]
 
-
+# Comparison of individual terms - S_mag DOES NOT have to conserve
 plt.figure(figsize=(10,6))
 plt.plot(tau, angular_momentum_magnitude, label=r'$|\vec{\mathcal{L}}|$', color='blue', linewidth=2)
 plt.plot(tau, S_mag, label=r'$|\vec{\mathcal{S}}_1 + \vec{\mathcal{S}}_2|$', color='red', linewidth=2)
@@ -505,7 +459,7 @@ plt.show()
 
 
 
-# Plot the components over time
+# Plot the orbital angular momentum components over time
 plt.figure(figsize=(10, 6))
 plt.plot(tau, Lx_sol, label=r'Regularized $L_x$', color='blue')
 plt.plot(tau, Ly_sol, label=r'Regularized $L_y$', color='green')
@@ -519,7 +473,7 @@ plt.grid(True, which='both', linestyle='--', linewidth=0.5)
 plt.show()
 
 
-# Hamiltonian at each time step
+# Extract the Hamiltonian at each time step
 H_sol = np.array([
     Hamiltonian(
         r_sol[i], pr_sol[i], Lx_sol[i], Ly_sol[i], Lz_sol[i],
@@ -533,13 +487,9 @@ relative_energy_change = np.abs(H_sol - H0) / np.abs(H0)
 print("Max relative energy change:", np.max(relative_energy_change))
 rel_H_err = np.abs(H_sol - H0) / np.abs(H0)
 print("Relative orbital angular momentum variation:", np.max(np.abs(angular_momentum_magnitude - L0) / L0))
+
+# Define the factor of LS product
 S_vectors = S1_vectors + S2_vectors  # shape (N, 3)
-
-
-S_vectors = S1_vectors + S2_vectors  # shape (N, 3)
-
-
-
 dot_LS = np.sum(L_vectors * S_vectors, axis=1)
 L_norm = np.linalg.norm(L_vectors, axis=1)
 S_norm = np.linalg.norm(S_vectors, axis=1)
@@ -547,7 +497,7 @@ angle_LS = np.arccos(np.clip(dot_LS / (L_norm * S_norm + 1e-14), -1.0, 1.0))
 
 plt.figure(figsize=(10,6))
 plt.plot(tau, angle_LS, label=r'$|\vec{\mathcal{L}}|$', color='blue', linewidth=2)
-plt.plot(tau, S_mag, label=r'$ANGLE BETWEEEN L AND S$', color='red', linewidth=2)
+plt.plot(tau, S_mag, label='S_mag', color='red', linewidth=2)
 plt.xlabel(r'$t$ (M)', fontsize=18)
 plt.ylabel('Magnitude', fontsize=18)
 plt.legend(fontsize=18)
@@ -556,7 +506,7 @@ plt.tight_layout()
 plt.show()
 
 
-#ANGULAR VELOCITY (z-component of Omega_L)
+#ANGULAR VELOCITY (z-component of Omega_L) - from the spherical defintion Lz = pphi, thus, emplyoing the Hamiltonian canonical equation w = dphi/dt = \partial H/dLz
 
 OmegaL_newtonian_z = np.array([
     Lz_sol[i] / (G**2 * M**2 * r_sol[i]**2 * mu)
@@ -614,6 +564,7 @@ OmegaL_S1S2_z = np.array([
     for i in range(len(tau))
 ])
 
+# ANGULAR VELOCITY EXTRACTION
 ang_vel = []
 for i in range(len(tau)):
     # Recompute Omega_L at each time step using solution arrays
@@ -633,7 +584,7 @@ plt.legend()
 plt.grid(True)
 plt.show()
 
-# Integrate angular velocity to get phase
+# Integrate angular velocity to get phase (employing the cumulative_trapezoid SciPy library)
 orbital_phase = cumulative_trapezoid(ang_vel, tau, initial=0)
 
 # Plot the orbital phase vs time
@@ -706,7 +657,7 @@ plt.legend(fontsize=18, loc='best')
 plt.grid(True)
 plt.show()
 
-
+# 3D SPIN-ANGULAR MOMENTUM TRAJECTORY PLOTS
 fig = plt.figure(figsize=(10, 7), facecolor='white')
 ax = fig.add_subplot(111, projection='3d')
 # Set the background color of the 3D plot to white
@@ -722,9 +673,9 @@ ax.plot(L_vectors[:,0], L_vectors[:,1], L_vectors[:,2], label=r'Trajectory of $\
 ax.plot(S1_vectors[:,0], S1_vectors[:,1], S1_vectors[:,2], label=r'Trajectory of $\vec{\mathcal{S}}_1$', color='green')
 ax.plot(S2_vectors[:,0], S2_vectors[:,1], S2_vectors[:,2], label=r'Trajectory of $\vec{\mathcal{S}}_2$', color='orange')
 
-# Choose an index along the trajectory for the arrow (e.g., halfway)
+# Choose an index along the trajectory for the arrow (initial direction)
 arrow_scale = 0.025
-i_arrow = 0  #len(L_vectors) // 2
+i_arrow = 0  # Set as the initial vector orientation
 
 # L arrow
 L_base = L_vectors[i_arrow]
@@ -767,10 +718,10 @@ plt.show()
 
 
 
-#ANGLES
+# PLOT THETA_{LS1}, THETA_{LS2}, THETA_{LS} AND THETA_{S1S2} for different chi1 values for a fixed chi2 value
 
-chi1_values = [-1.0, -0.6, -0.2, 0.2, 0.6, 1.0]  # Example spin magnitudes for body 1 #-1.0, -0.6, -0.2, 
-chi2 = -1.0  # Fixed spin magnitude for body 2
+chi1_values = [-1.0, -0.6, -0.2, 0.2, 0.6, 1.0]  # Example spin parameters for body 1
+chi2 = -1.0  # Fixed spin parameter for body 2
 
 
 # Store results for each chi1
@@ -791,7 +742,7 @@ for chi1 in chi1_values:
     r_sol, pr_sol, Lx_sol, Ly_sol, Lz_sol, S1x_sol, S1y_sol, S1z_sol, S2x_sol, S2y_sol, S2z_sol = sol.y
 
 
-# --- chi1 sweep and plotting ---
+# Store values as a list for a plot including all chi1 values
 angle_S1S2_deg_list = []
 angle_LS_deg_list = []
 angle_LS1_deg_list = []
