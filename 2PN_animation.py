@@ -10,7 +10,6 @@ from IPython.display import HTML
 from matplotlib.animation import PillowWriter
 from scipy.signal import find_peaks
 from matplotlib.ticker import MultipleLocator, FuncFormatter
-from sklearn.linear_model import LinearRegression
 from scipy.optimize import minimize
 from joblib import Parallel, delayed
 
