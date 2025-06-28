@@ -511,6 +511,9 @@ coeffs = p_monomial.coef  # These are the a_0, a_1, ..., a_n coefficients
 for i, c in enumerate(coeffs):
     print(f"a_{i} = {c:.6e}")
 
+# GRAVITATIONAL WAVE FREQUENCY AT MERGER
+print(f"GW frequency (numerically): {f_gw_smooth[-1]:.4f} Hz")
+
 # PRECESSION FREQUENCIES
 Omega_prec_1_vec = (
     nu * M / (r_sol**3) * (2 + 3 * m2 / (2 * m1))
