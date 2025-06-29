@@ -15,5 +15,5 @@ The code "inspirals_3_5PN_plots.py" includes some graphs used for plotting in th
 INFORMATION REGARDING RUNNING THE PYTHON CODES:
 
 - Ensure that you have downloaded all necessary libraries that are imported at the beginning of each document!
-- We recommend using a virtual environment, and to obtain the uninstalled libraries, write the command line in the terminal: pip install <library-name>
+- We recommend using a virtual environment in VSCode, and to obtain the uninstalled libraries, write the command line in the terminal: pip install <library-name>
 - For the files "2PN_graphing.py" and "inspirals_3_5PN_plots.py", the runtime may be long, hence consider removing unnecessary plots
