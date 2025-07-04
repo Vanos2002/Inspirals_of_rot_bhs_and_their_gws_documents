@@ -296,7 +296,10 @@ phi_smooth_sg = savgol_filter(phi_unwrapped, window_length, polyorder)
 dphi_dt_sg = savgol_filter(phi_unwrapped, window_length, polyorder, deriv=1, delta=np.mean(np.diff(t_sec)))
 # Post-processing: Trim data at merger
 merger_occurred = False
-i_final = len(t) 
+i_final = len(t)
+prev_dist = None
+prev_r_ISCO = None
+prev_time = None
 
 for i in range(1, len(t)):
     dist = np.sqrt((x1_sol[i] - x2_sol[i])**2 +
@@ -313,16 +316,16 @@ for i in range(1, len(t)):
     Sp_sol = Sp1_sol + Sp2_sol  # Total proper spin vector
     J = total_angular_momentum(L, Sp1_sol, Sp2_sol)  # Total angular momentum
 
-    # Define normalized vectors (ensure nondiverging field)
     L_hat = L / (np.linalg.norm(L) + 1e-14)
     S1_hat = Sp1_sol / (np.linalg.norm(Sp1_sol) + 1e-14)
     S2_hat = Sp2_sol / (np.linalg.norm(Sp2_sol) + 1e-14)
 
+    L_hat = L / (np.linalg.norm(L) + 1e-14)
     S_tot = Sp_sol
     chi_eff_kerr = np.dot(S_tot, L_hat) / M**2
     chi_eff_kerr = np.clip(chi_eff_kerr, -1.0, 1.0)  # Enforce physical bound
 
-    # Determine ISCO direction: prograde (sign=-1), retrograde (sign=+1)
+    # Determine ISCO direction: prograde (sign=+1), retrograde (sign=-1)
     LS_dot = np.dot(L, S_tot)
     sign = -1 if LS_dot > 0 else +1  # -1 for prograde, +1 for retrograde
 
@@ -334,14 +337,25 @@ for i in range(1, len(t)):
     # ISCO radius
     r_ISCO = KerrISCO(M, chi_eff_kerr, Z1, Z2, sign=sign)
 
-    # Stop integration at ISCO (total separation ought to be greater than 2 * r_ISCO, else stop simulation)
-    if dist < 2 * r_ISCO:
+    # Interpolation check: did we cross the threshold between steps?
+    if prev_dist is not None and prev_dist >= 2 * prev_r_ISCO and dist < 2 * r_ISCO:
+        f_prev = prev_dist - 2 * prev_r_ISCO
+        f_now = dist - 2 * r_ISCO
+        frac = f_prev / (f_prev - f_now)
+        t_merger = prev_time + frac * (t[i] - prev_time)
+        print(f"Interpolated merger time: t = {t_merger * time_unit_seconds:.6f} (seconds)")
+        print(f"Interpolated r_ISCO (M): {r_ISCO:.6f}")
+        print(f"KERR ISCO radius (meters): r_ISCO ={r_ISCO * sep_unit_meters:.3f}")
+        print(f"Interpolated separation/2: {(dist - frac*(dist-prev_dist))/2:.6f}")
         merger_occurred = True
         i_final = i
-        print(f"Merger detected at t = {t[i]:.4f}, r_ISCO (M) = {r_ISCO:.3f}")
-        print(f"Merger detected (real time): {t[i] * time_unit_seconds:.4f} s")
-        print(f"KERR ISCO radius (meters): r_ISCO ={r_ISCO * sep_unit_meters:.3f}")
-        break
+        break  # Stop after interpolation
+
+
+    # Update previous values for next step
+    prev_dist = dist
+    prev_r_ISCO = r_ISCO
+    prev_time = t[i]
     
 
 
