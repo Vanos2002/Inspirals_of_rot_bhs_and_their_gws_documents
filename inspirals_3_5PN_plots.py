@@ -338,9 +338,9 @@ for i in range(1, len(t)):
     if dist < 2 * r_ISCO:
         merger_occurred = True
         i_final = i
-        print(f"Merger detected at t = {t[i]:.4f}, r_ISCO (M) = {dist / 2:.3f}")
+        print(f"Merger detected at t = {t[i]:.4f}, r_ISCO (M) = {r_ISCO:.3f}")
         print(f"Merger detected (real time): {t[i] * time_unit_seconds:.4f} s")
-        print(f"KERR ISCO radius (meters): r_ISCO ={dist * sep_unit_meters / 2:.3f}")
+        print(f"KERR ISCO radius (meters): r_ISCO ={r_ISCO * sep_unit_meters:.3f}")
         break
     
 
@@ -514,6 +514,13 @@ for i, c in enumerate(coeffs):
 # GRAVITATIONAL WAVE FREQUENCY AT MERGER
 print(f"GW frequency (numerically): {f_gw_smooth[-1]:.4f} Hz")
 
+# r_vec and v_vec are (3, N), so transpose to (N, 3)
+r_vec_T = r_vec.T  # shape (N, 3)
+v_vec_T = v_vec.T  # shape (N, 3)
+
+L_vec = mu * np.cross(r_vec_T, v_vec_T)  # shape (N, 3)
+L_norm = np.linalg.norm(L_vec, axis=1)  
+
 # PRECESSION FREQUENCIES
 Omega_prec_1_vec = (
     nu * M / (r_sol**3) * (2 + 3 * m2 / (2 * m1))
@@ -590,12 +597,7 @@ plt.gca().invert_xaxis()
 plt.tight_layout()
 #plt.show()
 
-# r_vec and v_vec are (3, N), so transpose to (N, 3)
-r_vec_T = r_vec.T  # shape (N, 3)
-v_vec_T = v_vec.T  # shape (N, 3)
 
-L_vec = mu * np.cross(r_vec_T, v_vec_T)  # shape (N, 3)
-L_norm = np.linalg.norm(L_vec, axis=1)  
 cos_iota = L_vec[:, 2] / L_norm
 cos_iota = np.clip(cos_iota, -1.0, 1.0)
 iota = np.arccos(cos_iota)               # INCLINATION ANGLE DEFINITION
@@ -691,7 +693,7 @@ S1_vec = np.array([Sp1x_sol, Sp1y_sol, Sp1z_sol]).T  # shape (N, 3)
 S2_vec = np.array([Sp2x_sol, Sp2y_sol, Sp2z_sol]).T  # shape (N, 3)
 S_vec = S1_vec + S2_vec  # Total spin vector
 
-Normalize the spin vectors
+# Normalize the spin vectors
 S1_norm = np.linalg.norm(S1_vec, axis=1)
 S2_norm = np.linalg.norm(S2_vec, axis=1)
 S_norm = np.linalg.norm(S_vec, axis=1)
