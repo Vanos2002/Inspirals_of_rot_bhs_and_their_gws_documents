@@ -323,9 +323,9 @@ def drawframe(s):
         if dist < 2 * r_ISCO:  # Threshold distance for merger (double ISCO)
             merger_occurred = True
             i_final = i  # Store final frame index
-            print(f"Merger detected at t = {t[i_final]:.4f}, r_ISCO (M) = {dist / 2:.3f}")
+            print(f"Merger detected at t = {t[i_final]:.4f}, r_ISCO (M) = {r_ISCO:.3f}")
             print(f"Merger detected (real time): {t[i_final] * time_unit_seconds:.4f} s")
-            print(f"KERR ISCO radius (meters): r_ISCO ={dist * sep_unit_meters / 2:.3f}")
+            print(f"KERR ISCO radius (meters): r_ISCO ={r_ISCO * sep_unit_meters:.3f}")
             return traj1, traj2, bh1, bh2, spin1, spin2, total_spin
 
     if merger_occurred:
