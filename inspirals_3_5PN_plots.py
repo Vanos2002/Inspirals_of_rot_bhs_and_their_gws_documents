@@ -611,6 +611,14 @@ plt.gca().invert_xaxis()
 plt.tight_layout()
 #plt.show()
 
+r_0vec = np.array([x1_0 - x2_0, y1_0 - y2_0, z1_0 - z2_0])  # Initial separation vector
+r_0 = np.linalg.norm(r_0vec)  # Initial separation
+tau_new = 5 * r_0**4 / (256 * mu) * time_unit_seconds  # Time to coalescence in [s] !!!Assuming non-spinning case for simplicity
+ratio = (1 / nu)**0.25              # Correction due to time in the two-body Newtonian problem scaling
+tau_corrected = ratio * tau_new
+print(f"Time to coalescence: {tau_new:.4f} seconds")
+print(f"Corrected analytic time to coalescence: {tau_corrected:.4f} seconds")
+
 
 cos_iota = L_vec[:, 2] / L_norm
 cos_iota = np.clip(cos_iota, -1.0, 1.0)
