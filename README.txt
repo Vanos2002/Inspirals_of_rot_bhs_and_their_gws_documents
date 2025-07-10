@@ -27,4 +27,3 @@ g++ 3_5PN_rk4_adaptive.cpp -o 3_5PN_rk4_adaptive
 ./3_5PN_rk4_adaptive
 2.
 python3 cpp_animation.py
-
