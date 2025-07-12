@@ -12,6 +12,7 @@ from scipy.signal import find_peaks
 from matplotlib.ticker import MultipleLocator, FuncFormatter
 from scipy.optimize import minimize
 from joblib import Parallel, delayed
+from numba import njit
 
 mpl.rcParams['agg.path.chunksize'] = 100000   # For enhanced plotting
 
@@ -96,7 +97,7 @@ def spin_vectors(S1x, S1y, S1z, S2x, S2y, S2z):
 
     return S1, S2
 
-
+@njit
 def angular_momentum(phi, theta, pphi, ptheta):
     
     L = GM * mu * np.array([ -pphi*np.cos(phi)*cot(theta) - ptheta*np.sin(phi), 
@@ -104,31 +105,31 @@ def angular_momentum(phi, theta, pphi, ptheta):
         pphi])
     
     return L
-
+@njit
 def angular_momentum_magnitude(L):
     return np.linalg.norm(L)
-
+@njit
 def total_angular_momentum(phi, theta, pphi, ptheta, S1x, S1y, S1z, S2x, S2y, S2z):
     return GM * mu * np.array([ -pphi*np.cos(phi)*cot(theta) - ptheta*np.sin(phi), 
         ptheta*np.cos(phi) - pphi*cot(theta)*np.sin(phi), 
         pphi]) + np.array([S1x, S1y, S1z]) + np.array([S2x, S2y, S2z])
 
-
+@njit
 # Defining the Hamiltonian dynamics up to the second post-Newtonian order
 def HN(r, theta, pr, pphi, ptheta):
     
     return (mu*(ptheta**2 + r*(-2 + pr**2*r) + pphi**2*csc(theta)**2))/(2*r**2)
-    
+@njit    
 def H1PN(r, theta, pr, pphi, ptheta):
     return (1/(8*c**2*r**4))*(mu*(4*r**2 + (-1 + 3*nu)*(ptheta**2 + pr**2*r**2 + pphi**2*csc(theta)**2)**2 - 
     4*r*(ptheta**2*(3 + nu) + pr**2*r**2*(3 + 2*nu) + pphi**2*(3 + nu)*csc(theta)**2)))
-
+@njit
 def H1_5PN(r, phi, theta, ptheta, pphi, S1x, S1y, S1z, S2x, S2y, S2z):
     return (1/(2*c**2*G*M**2*m1*m2*r**3))*(mu*(pphi*(3*m2**2*S1z + 3*m1**2*S2z + 4*m1*m2*(S1z + S2z)) - 
     (3*m2**2*S1x + 3*m1**2*S2x + 4*m1*m2*(S1x + S2x))*(pphi*np.cos(phi)*cot(theta) + 
       ptheta*np.sin(phi)) + (3*m2**2*S1y + 3*m1**2*S2y + 4*m1*m2*(S1y + S2y))*
      (ptheta*np.cos(phi) - pphi*cot(theta)*np.sin(phi))))
-  
+@njit  
 def H2PN(r, theta, pr, ptheta, pphi):
     
     return (1/(16*c**4*r**6))*(mu*(24*pr**2*r**4*nu - 6*pr**4*r**5*nu**2 - 4*r**3*(1 + 3*nu) - 
@@ -137,28 +138,28 @@ def H2PN(r, theta, pr, ptheta, pphi):
     2*r*(-5 + nu*(20 + 3*nu))*(ptheta**2 + pr**2*r**2 + pphi**2*csc(theta)**2)**2 + 
     (1 + 5*(-1 + nu)*nu)*(ptheta**2 + pr**2*r**2 + pphi**2*csc(theta)**2)**3))
     
-
+@njit
 def HS1S1(r, phi, theta, S1x, S1y, S1z):
 
     return (1/(8*c**2*G**2*M**3*m1*r**3))*(m2*(-((S1x**2 + S1y**2 - 2*S1z**2)*(1 + 3*np.cos(2*theta))) + 
     6*(S1x - S1y)*(S1x + S1y)*np.cos(2*phi)*np.sin(theta)**2 + 12*S1x*S1z*np.cos(phi)*np.sin(2*theta) + 
     12*S1y*S1z*np.sin(2*theta)*np.sin(phi) + 12*S1x*S1y*np.sin(theta)**2*np.sin(2*phi)))
 
-
+@njit
 def HS2S2(r, phi, theta, S2x, S2y, S2z):
 
     return (1/(8*c**2*G**2*M**3*m2*r**3))*(m1*(-((S2x**2 + S2y**2 - 2*S2z**2)*(1 + 3*np.cos(2*theta))) + 
     6*(S2x - S2y)*(S2x + S2y)*np.cos(2*phi)*np.sin(theta)**2 + 12*S2x*S2z*np.cos(phi)*np.sin(2*theta) + 
     12*S2y*S2z*np.sin(2*theta)*np.sin(phi) + 12*S2x*S2y*np.sin(theta)**2*np.sin(2*phi)))
     
-    
+@njit    
 def HS1S2(r, phi, theta, S1x, S1y, S1z, S2x, S2y, S2z):
 
     return -((1/(c**2*G**2*M**3*r**3))*(S1x*S2x + S1y*S2y + S1z*S2z - 
     3*(S1z*np.cos(theta) + np.sin(theta)*(S1x*np.cos(phi) + S1y*np.sin(phi)))*
      (S2z*np.cos(theta) + np.sin(theta)*(S2x*np.cos(phi) + S2y*np.sin(phi)))))
 
-
+@njit
 def Hamiltonian(r, phi, theta, pr, pphi, ptheta, S1x, S1y, S1z, S2x, S2y, S2z):
     return (HN(r, theta, pr, pphi, ptheta)
         + H1PN(r, theta, pr, pphi, ptheta)
