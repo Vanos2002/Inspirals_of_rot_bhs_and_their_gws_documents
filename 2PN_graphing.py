@@ -15,6 +15,7 @@ from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error
 from scipy.optimize import minimize
 from joblib import Parallel, delayed
+from numba import njit
 
 
 mpl.rcParams['agg.path.chunksize'] = 100000  # We employ for high resolution matplotlib plotting
@@ -89,34 +90,34 @@ def spin_vectors(S1x, S1y, S1z, S2x, S2y, S2z):
 
     return S1, S2
 
-
+@njit
 def angular_momentum(Lx, Ly, Lz):
     
     L = np.array([Lx, Ly, Lz])
     
     return L
-
+@njit
 def angular_momentum_magnitude(L):
     return np.linalg.norm(L)
-
+@njit
 def total_angular_momentum(Lx, Ly, Lz, S1x, S1y, S1z, S2x, S2y, S2z):
     return np.array([Lx, Ly, Lz]) + np.array([S1x, S1y, S1z]) + np.array([S2x, S2y, S2z])
 
-
+@njit
 # Defining the Hamiltonian dynamics up to the second post-Newtonian order - we define each term individually for the possibility of examining up to a certain level
 def HN(r, pr, Lx, Ly, Lz):
     
     return (1/2)*(pr**2 + (-2*r + (Lx**2 + Ly**2 + Lz**2)/(G**2*M**2*mu**2))/r**2)*mu
-    
+@njit    
 def H1PN(r, pr, Lx, Ly, Lz):
     return (mu*(4/r**2 + (pr**2 + (Lx**2 + Ly**2 + Lz**2)/(G**2*M**2*r**2*mu**2))**2*(-1 + 3*nu) - 
     (4*(((Lx**2 + Ly**2 + Lz**2)*(3 + nu))/(G**2*M**2*r**2*mu**2) + pr**2*(3 + 2*nu)))/r))/(8*c**2)
-
+@njit
 def H1_5PN(r, Lx, Ly, Lz, S1x, S1y, S1z, S2x, S2y, S2z):
     return (2*(Lx*(S1x + (3*m2*S1x)/(4*m1) + S2x + (3*m1*S2x)/(4*m2)) + 
     Ly*(S1y + (3*m2*S1y)/(4*m1) + S2y + (3*m1*S2y)/(4*m2)) + 
     Lz*(S1z + (3*m2*S1z)/(4*m1) + S2z + (3*m1*S2z)/(4*m2))))/(c**2*G**2*M**3*r**3)
-  
+@njit  
 def H2PN(r, pr, Lx, Ly, Lz):
     
     return (1/(16*c**4))*(mu*(-((4*(1 + 3*nu))/r**3) + 
@@ -124,28 +125,28 @@ def H2PN(r, pr, Lx, Ly, Lz):
     (8*(((Lx**2 + Ly**2 + Lz**2)*(5 + 8*nu))/(G**2*M**2*r**2*mu**2) + pr**2*(5 + 11*nu)))/r**2 + 
     (2*(-5*pr**4*nu**2 - (2*(Lx**2 + Ly**2 + Lz**2)*pr**2*nu**2)/(G**2*M**2*r**2*mu**2) + 
        (pr**2 + (Lx**2 + Ly**2 + Lz**2)/(G**2*M**2*r**2*mu**2))**2*(5 - nu*(20 + 3*nu))))/r))
-
+@njit
 def HS1S1(r, Lx, Ly, Lz, S1x, S1y, S1z):
 
     return -((m2*(-6*Ly*Lz*S1y*S1z - 6*Lx*S1x*(Ly*S1y + Lz*S1z) + Lz**2*(S1x**2 + S1y**2 - 2*S1z**2) + 
      Ly**2*(S1x**2 - 2*S1y**2 + S1z**2) + Lx**2*(-2*S1x**2 + S1y**2 + S1z**2)))/
     (2*c**2*G**2*(Lx**2 + Ly**2 + Lz**2)*M**3*m1*r**3))
 
-
+@njit
 def HS2S2(r, Lx, Ly, Lz, S2x, S2y, S2z):
 
     return -((m1*(-6*Ly*Lz*S2y*S2z - 6*Lx*S2x*(Ly*S2y + Lz*S2z) + Lz**2*(S2x**2 + S2y**2 - 2*S2z**2) + 
      Ly**2*(S2x**2 - 2*S2y**2 + S2z**2) + Lx**2*(-2*S2x**2 + S2y**2 + S2z**2)))/
     (2*c**2*G**2*(Lx**2 + Ly**2 + Lz**2)*M**3*m2*r**3))
     
-    
+@njit    
 def HS1S2(r, Lx, Ly, Lz, S1x, S1y, S1z, S2x, S2y, S2z):
 
     return (3*Lx*(Ly*S1y*S2x + Lz*S1z*S2x + Ly*S1x*S2y + Lz*S1x*S2z) + 
     3*Ly*Lz*(S1z*S2y + S1y*S2z) - Lz**2*(S1x*S2x + S1y*S2y - 2*S1z*S2z) + 
     Lx**2*(2*S1x*S2x - S1y*S2y - S1z*S2z) - Ly**2*(S1x*S2x - 2*S1y*S2y + S1z*S2z))/(c**2*G**2*(Lx**2 + Ly**2 + Lz**2)*M**3*r**3)
 
-
+@njit
 def Hamiltonian(r, pr, Lx, Ly, Lz, S1x, S1y, S1z, S2x, S2y, S2z):
     return (HN(r, pr, Lx, Ly, Lz)
         + H1PN(r, pr, Lx, Ly, Lz)
