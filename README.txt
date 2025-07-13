@@ -1,3 +1,5 @@
+Repository made public on July 13, 2025; last updated July 13, 2025.
+
 This repository contains the code developed for the Bachelor’s thesis titled “Inspirals of Rotating Black Holes and Their Gravitational Waves” by Matěj Váňa, supervised by Mgr. Vojtěch Witzany, Dr. rer. nat., at the Institute of Theoretical Physics, Charles University.
 
 The two Mathematica nootebooks (developed via Mathematica 14.0 for desktop) titled "eom_2PN_derivation_for_anim.nb" and "eom_2PN_derivation_plots.nb" were employed for the 2PN equations of motion derivation from the Hamiltonian provided in the paper: "Integrability of eccentric, spinning black hole binaries up to second post-Newtonian order" - Sashwat Tanay, Leo C. Stein, José T. Gálvez Ghersi - arXiv:2012.06586. 
